@@ -14,6 +14,7 @@ const {
     updateMyProfile
 } = require('../controllers/userController')
 
+const { googleLogin } = require('../controllers/googleAuthController')
 const { protect, admin } = require('../middleware/authMiddleware')
 const profileUpload = require('../middleware/profileUpload')
 
@@ -29,6 +30,7 @@ router.post(
 )
 
 router.post('/login', loginUser)
+router.post('/google', googleLogin)
 
 // Logged-in user's profile
 router.get('/profile', protect, getMyProfile)

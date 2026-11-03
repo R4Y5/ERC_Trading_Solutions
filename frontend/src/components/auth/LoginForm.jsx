@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Formik, Form, Field, ErrorMessage } from 'formik'
 import * as Yup from 'yup'
-import api from '../../services/api'
+import { useDispatch } from 'react-redux'
+import { login } from '../../actions/authActions'
 
 // Validation stays inside this file
 const loginSchema = Yup.object({
@@ -15,33 +16,14 @@ const loginSchema = Yup.object({
 })
 
 function LoginForm({ onLoginSuccess }) {
+    const dispatch = useDispatch()
     const [serverError, setServerError] = useState('')
 
     const handleSubmit = async (values, { setSubmitting }) => {
         setServerError('')
 
         try {
-            const response = await api.post('/users/login', {
-                email: values.email.trim().toLowerCase(),
-                password: values.password,
-            })
-
-            // Adjust these property names if your backend returns
-            // a different response structure.
-            const token = response.data.token
-
-            if (!token) {
-                throw new Error('Login succeeded, but no token was returned.')
-            }
-
-            localStorage.setItem('token', token)
-
-            if (response.data.user) {
-                localStorage.setItem(
-                    'user',
-                    JSON.stringify(response.data.user)
-                )
-            }
+            await dispatch(login(values.email, values.password))
 
             onLoginSuccess()
         } catch (error) {

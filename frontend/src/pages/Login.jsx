@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import LoginForm from '../components/auth/LoginForm'
+import GoogleLoginButton from '../components/auth/GoogleLoginButton'
 
 function Login() {
     const navigate = useNavigate()
@@ -14,6 +15,8 @@ function Login() {
             <p>Welcome back! Please log in to your account.</p>
 
             <LoginForm onLoginSuccess={handleLoginSuccess} />
+
+            <GoogleLoginButton />
 
             <p>
                 Don't have an account?{' '}

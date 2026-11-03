@@ -447,6 +447,12 @@ const loginUser = async (req, res) => {
             })
         }
 
+        if (user.auth_provider === 'google') {
+            return res.status(400).json({
+                message: 'This account uses Google sign-in. Please click "Continue with Google".'
+            })
+        }
+
         if (
             user.registration_completed === false ||
             !user.username ||

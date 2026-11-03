@@ -25,7 +25,8 @@ const getTransporter = () => {
     return transporter
 }
 
-const sendMail = async ({ to, subject, text, html }) => {
+// attachments: optional Nodemailer attachments, e.g. the PDF receipt
+const sendMail = async ({ to, subject, text, html, attachments }) => {
     const fromName = process.env.SMTP_FROM_NAME || 'ERC Trading Solutions'
     const fromEmail = process.env.SMTP_FROM_EMAIL || 'noreply@erctrading.com'
 
@@ -34,7 +35,8 @@ const sendMail = async ({ to, subject, text, html }) => {
         to,
         subject,
         text,
-        html
+        html,
+        attachments: attachments || []
     })
 
     console.log('Email sent:', info.messageId, '->', to)

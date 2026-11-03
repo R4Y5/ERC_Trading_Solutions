@@ -97,10 +97,21 @@ const googleLogin = async (req, res) => {
             return res.status(500).json({ message: error.message })
         }
 
-        console.error('Google token verification failed:', error.code || error.message)
-        return res.status(401).json({
-            message: 'Google sign-in failed. Please try again.'
-        })
+        console.error('Google token verification failed:', error.code || '', error.message)
+
+        let message = 'Google sign-in failed. Please try again.'
+
+        if (/"aud"|audience|"iss"|issuer/i.test(error.message || '')) {
+            // Token was issued for a different Firebase project
+            message = 'Google sign-in failed: FIREBASE_PROJECT_ID in backend/.env must exactly match VITE_FIREBASE_PROJECT_ID in frontend/.env. Restart the backend after fixing it.'
+        } else if (error.code === 'auth/id-token-expired') {
+            message = 'Your Google sign-in expired. Please try again.'
+        } else if (process.env.NODE_ENV !== 'production') {
+            // Extra detail while developing; hidden in production
+            message = `Google sign-in failed (${error.code || 'token rejected'}). Check the backend terminal for details.`
+        }
+
+        return res.status(401).json({ message })
     }
 
     try {

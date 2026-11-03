@@ -1,10 +1,10 @@
 import { Navigate } from 'react-router-dom'
-import { getUser } from '../utils/auth'
+import { useSelector } from 'react-redux'
 
 function AdminRoute({ children }) {
-    const user = getUser()
+    const { token, user } = useSelector((state) => state.auth)
 
-    if (!user) {
+    if (!token || !user) {
         return <Navigate to="/login" replace />
     }
 

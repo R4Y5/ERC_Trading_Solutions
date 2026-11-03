@@ -1,111 +1,269 @@
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+/*
+ * Global styles for ERC Trading Solutions.
+ * Material UI components get their look from src/theme.js; the rules
+ * below give plain HTML elements (inputs, buttons, tables) a matching style.
+ */
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+:root {
+  /* Brand tokens (kept in sync with src/theme.js) */
+  --primary: #1e3a8a;
+  --primary-dark: #172554;
+  --secondary: #f59e0b;
+
+  /* Variables used by the sales chart and older components */
+  --text: #4b5563;
+  --text-h: #111827;
+  --bg: #ffffff;
+  --page-bg: #f5f7fb;
+  --border: #e5e7eb;
+  --accent: #1e3a8a;
+  --accent-bg: rgba(30, 58, 138, 0.08);
+  --accent-border: rgba(30, 58, 138, 0.45);
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.1);
+
+  --sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text-h);
+  background: var(--page-bg);
+  color-scheme: light;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
+  background: var(--page-bg);
 }
 
 #root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
+}
+
+/* Page content (everything after the navbar) gets a centered,
+   readable width with side padding. */
+#root > div:not(.full-bleed) > *:not(.app-navbar):not(.full-bleed) {
+  width: 100%;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 16px;
+  padding-right: 16px;
 }
 
 h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
+h2,
+h3,
+h4 {
   color: var(--text-h);
+  line-height: 1.25;
 }
 
 h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
+  font-size: 1.875rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 24px 0 16px;
 }
+
 h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
+  font-size: 1.375rem;
+  font-weight: 700;
+  margin: 20px 0 12px;
 }
+
+h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 16px 0 8px;
+}
+
 p {
+  margin: 0 0 8px;
+}
+
+a {
+  color: var(--primary);
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 24px 0;
+}
+
+img {
+  max-width: 100%;
+}
+
+/* ---------- Plain form controls (not Material UI) ---------- */
+
+input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([class*='Mui']),
+select:not([class*='Mui']),
+textarea:not([class*='Mui']) {
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--text-h);
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 8px 10px;
+  max-width: 100%;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+input:not([class*='Mui']):focus,
+select:not([class*='Mui']):focus,
+textarea:not([class*='Mui']):focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+input[type='checkbox'],
+input[type='radio'] {
+  accent-color: var(--primary);
+  width: 16px;
+  height: 16px;
+}
+
+label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+/* Plain <button>s (Material UI buttons have their own styles) */
+button:not([class*='Mui']) {
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--primary);
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+button:not([class*='Mui']):hover:not(:disabled) {
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
+}
+
+button:not([class*='Mui'])[type='submit'] {
+  color: #fff;
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+button:not([class*='Mui'])[type='submit']:hover:not(:disabled) {
+  background: var(--primary-dark);
+}
+
+button:not([class*='Mui']):disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+button:not([class*='Mui']):focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* ---------- Plain tables ---------- */
+
+table:not([class*='Mui']) {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  font-size: 0.925rem;
+}
+
+table:not([class*='Mui']) th,
+table:not([class*='Mui']) td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+table:not([class*='Mui']) th {
+  background: #f9fafb;
+  font-weight: 600;
+  color: #374151;
+}
+
+/* ---------- Helpers used by existing components ---------- */
+
+.error,
+.error-message {
+  color: #dc2626;
+  font-size: 0.875rem;
+}
+
+/* Two-column form layout (label + field pairs) */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.form-grid > div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.form-grid > div > input,
+.form-grid > div > select,
+.form-grid > div > textarea {
+  width: 100%;
+}
+
+.form-grid > div > p {
   margin: 0;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+.form-grid-full,
+.form-grid > button {
+  grid-column: 1 / -1;
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+.form-grid > button[type='submit'] {
+  padding: 11px 16px;
+  font-size: 1rem;
+}
+
+@media (max-width: 600px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form-grid > hr,
+.form-grid > h2,
+.form-grid > h3 {
+  grid-column: 1 / -1;
+  margin: 4px 0;
+}
+
+.form-grid > br {
+  display: none;
+}
+
+.form-grid > button[type='button'] {
+  grid-column: auto;
 }

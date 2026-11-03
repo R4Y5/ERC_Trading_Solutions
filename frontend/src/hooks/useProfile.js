@@ -1,4 +1,6 @@
 
+import { useDispatch } from "react-redux";
+import { updateAuthUser } from "../actions/authActions";
 import { useCallback, useEffect, useState } from "react";
 import {
   getMyProfile,
@@ -53,10 +55,6 @@ function formatDateForInput(value) {
   return `${year}-${month}-${day}`;
 }
 
-function saveUserLocally(user) {
-  localStorage.setItem("user", JSON.stringify(user));
-}
-
 function getErrorMessage(error, fallback) {
   if (error.response?.status === 401) {
     return "Your session may have expired. Please log in again.";
@@ -66,6 +64,7 @@ function getErrorMessage(error, fallback) {
 }
 
 export default function useProfile() {
+  const dispatch = useDispatch();
   const [user, setUser] = useState(null);
   const [formData, setFormData] = useState(getCustomerForm(null));
 
@@ -93,7 +92,7 @@ export default function useProfile() {
 
       setUser(profile);
       setFormData(getCustomerForm(profile));
-      saveUserLocally(profile);
+      dispatch(updateAuthUser(profile));
     } catch (err) {
       console.error("Fetch profile error:", err);
       setError(
@@ -105,9 +104,10 @@ export default function useProfile() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- load profile on page open
     fetchProfile();
   }, [fetchProfile]);
 
@@ -169,7 +169,7 @@ const originalValue =
 
       setUser(updatedUser);
       setFormData(getCustomerForm(updatedUser));
-      saveUserLocally(updatedUser);
+      dispatch(updateAuthUser(updatedUser));
 
       setEditing(false);
       setMessage(response.message || "Profile updated successfully.");
@@ -208,7 +208,7 @@ const originalValue =
       }
 
       setUser(updatedUser);
-      saveUserLocally(updatedUser);
+      dispatch(updateAuthUser(updatedUser));
 
       setMessage(
         response.message || "Profile picture updated successfully."

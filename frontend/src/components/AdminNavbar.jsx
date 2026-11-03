@@ -1,55 +1,20 @@
-import { Link, useNavigate } from 'react-router-dom'
-import { logout } from '../utils/auth'
+import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined'
+import PeopleOutlineIcon from '@mui/icons-material/PeopleOutlined'
+import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined'
+import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
+import RateReviewOutlinedIcon from '@mui/icons-material/RateReviewOutlined'
+import AppNavbar from './layout/AppNavbar'
+
+const links = [
+    { to: '/admin', label: 'Dashboard', icon: <DashboardOutlinedIcon /> },
+    { to: '/users', label: 'Users', icon: <PeopleOutlineIcon /> },
+    { to: '/items', label: 'Items', icon: <Inventory2OutlinedIcon /> },
+    { to: '/orders', label: 'Orders', icon: <ReceiptLongOutlinedIcon /> },
+    { to: '/reviews/admin', label: 'Reviews', icon: <RateReviewOutlinedIcon /> }
+]
 
 function AdminNavbar() {
-    const navigate = useNavigate()
-
-    const handleLogout = () => {
-        logout()
-        navigate('/login')
-    }
-
-    return (
-        <nav>
-            <h2>ERC Trading Solutions</h2>
-
-            <div>
-                <Link to="/admin">
-                    Dashboard
-                </Link>
-
-                {' | '}
-
-                <Link to="/users">
-                    Users
-                </Link>
-
-                {' | '}
-
-                <Link to="/items">
-                    Items
-                </Link>
-
-                {' | '}
-
-                <Link to="/orders">
-                    Orders
-                </Link>
-
-                {' | '}
-
-                <Link to="/reviews/admin">
-                    Reviews
-                </Link>
-
-                {' | '}
-
-                <button onClick={handleLogout}>
-                    Logout
-                </button>
-            </div>
-        </nav>
-    )
+    return <AppNavbar links={links} homePath="/admin" subtitle="Admin" />
 }
 
 export default AdminNavbar

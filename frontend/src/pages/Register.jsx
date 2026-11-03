@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import api from "../services/api";
+import GoogleLoginButton from "../components/auth/GoogleLoginButton";
 
 const registerSchema = Yup.object({
   email: Yup.string()
@@ -124,6 +125,8 @@ function Register() {
           </Form>
         )}
       </Formik>
+
+      <GoogleLoginButton label="Sign up with Google" />
 
       {message && (
         <p role="alert" style={{ color: "#b91c1c" }}>

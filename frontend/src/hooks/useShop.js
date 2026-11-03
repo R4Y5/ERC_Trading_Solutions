@@ -6,13 +6,14 @@ import {
     useState
 } from 'react'
 
-import {
-    addShopItemToCart,
-    getShopItem,
-    getShopItems
-} from '../services/shopService'
+import { useDispatch, useSelector } from 'react-redux'
 
-import { getToken } from '../utils/auth'
+import {
+    getProducts,
+    getProductDetails,
+    closeProductDetails
+} from '../actions/productActions'
+import { addToCart as addToCartAction } from '../actions/cartActions'
 
 const getActiveReviews = (item) =>
     (item?.reviews || []).filter(
@@ -36,8 +37,17 @@ export const getProductReviewCount = (item) =>
     getActiveReviews(item).length
 
 function useShop() {
-    const [items, setItems] = useState([])
-    const [loading, setLoading] = useState(true)
+    const dispatch = useDispatch()
+
+    // Shared state lives in the Redux store
+    const { items, loading } = useSelector((state) => state.products)
+    const {
+        item: selectedItem,
+        loading: detailsLoading
+    } = useSelector((state) => state.productDetails)
+    const { token } = useSelector((state) => state.auth)
+
+    // Page-only UI state stays local
     const [message, setMessage] = useState('')
 
     // Search and filters
@@ -56,27 +66,14 @@ function useShop() {
     const [visibleCount, setVisibleCount] = useState(12)
 
     // Product details and cart
-    const [selectedItem, setSelectedItem] = useState(null)
-    const [detailsLoading, setDetailsLoading] = useState(false)
     const [quantity, setQuantity] = useState(1)
     const [addingItemId, setAddingItemId] = useState(null)
 
-    const loadItems = useCallback(async () => {
-        try {
-            setLoading(true)
-            setMessage('')
-
-            const data = await getShopItems()
-            setItems(data)
-        } catch (error) {
-            setMessage(
-                error.response?.data?.message ||
-                'Failed to load products.'
-            )
-        } finally {
-            setLoading(false)
-        }
-    }, [])
+    const loadItems = useCallback(() => {
+        dispatch(getProducts()).catch((error) => {
+            setMessage(error.message)
+        })
+    }, [dispatch])
 
     useEffect(() => {
         loadItems()
@@ -201,11 +198,8 @@ function useShop() {
         sortBy
     ])
 
-    // Reset the displayed position whenever filters or sorting change
-    useEffect(() => {
-        setCurrentPage(1)
-        setVisibleCount(itemsPerPage)
-    }, [
+        // Reset the displayed position whenever filters or sorting change
+    const filterKey = JSON.stringify([
         searchTerm,
         minPrice,
         maxPrice,
@@ -216,6 +210,13 @@ function useShop() {
         displayMode,
         itemsPerPage
     ])
+    const [previousFilterKey, setPreviousFilterKey] = useState(filterKey)
+
+    if (filterKey !== previousFilterKey) {
+        setPreviousFilterKey(filterKey)
+        setCurrentPage(1)
+        setVisibleCount(itemsPerPage)
+    }
 
     // Products for pagination mode
     const totalPages = Math.max(
@@ -241,30 +242,29 @@ function useShop() {
     }, [itemsPerPage, filteredItems.length])
 
     const openDetails = async (item) => {
-        setSelectedItem(item)
         setQuantity(1)
-        setDetailsLoading(true)
 
         try {
-            const fullItem = await getShopItem(item._id)
-            setSelectedItem(fullItem)
+            await dispatch(getProductDetails(item))
         } catch (error) {
-            setMessage(
-                error.response?.data?.message ||
-                'Failed to load product details.'
-            )
-        } finally {
-            setDetailsLoading(false)
+            setMessage(error.message)
         }
     }
 
     const closeDetails = () => {
-        setSelectedItem(null)
+        dispatch(closeProductDetails())
         setQuantity(1)
     }
 
+    // Don't leave a product modal open after leaving the shop
+    useEffect(() => {
+        return () => {
+            dispatch(closeProductDetails())
+        }
+    }, [dispatch])
+
     const addToCart = async (item, requestedQuantity = quantity) => {
-        if (!getToken()) {
+        if (!token) {
             setMessage('Please log in to add products to your cart.')
             return
         }
@@ -286,16 +286,14 @@ function useShop() {
             setAddingItemId(item._id)
             setMessage('')
 
-            const response = await addShopItemToCart(item._id, amount)
+            // Updates the cart in the store (and the navbar count)
+            const response = await dispatch(addToCartAction(item._id, amount))
 
             setMessage(
                 response.message || 'Product added to cart successfully.'
             )
         } catch (error) {
-            setMessage(
-                error.response?.data?.message ||
-                'Failed to add product to cart.'
-            )
+            setMessage(error.message)
         } finally {
             setAddingItemId(null)
         }

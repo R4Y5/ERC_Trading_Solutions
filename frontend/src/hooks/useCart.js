@@ -1,15 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import {
-    getCart,
-    updateCartItem as updateCartItemRequest,
-    removeCartItem as removeCartItemRequest,
+    fetchCart,
+    updateCartQuantity,
+    removeFromCart,
+    removeManyFromCart,
     checkoutCart
-} from '../services/cartService'
+} from '../actions/cartActions'
 
 function useCart() {
-    const [cart, setCart] = useState(null)
+    const dispatch = useDispatch()
+
+    // The cart itself lives in the Redux store
+    const { cart, loading } = useSelector((state) => state.cart)
+
+    // Page-only UI state stays local
     const [selectedItemIds, setSelectedItemIds] = useState([])
-    const [loading, setLoading] = useState(true)
     const [updatingItemId, setUpdatingItemId] = useState(null)
     const [removingItemId, setRemovingItemId] = useState(null)
     const [deletingSelected, setDeletingSelected] = useState(false)
@@ -23,14 +29,9 @@ function useCart() {
     }
 
     const loadCart = useCallback(async () => {
-        setLoading(true)
-
         try {
-            const data = await getCart()
-            const nextCart = data.cart || null
+            const nextCart = await dispatch(fetchCart())
             const nextItems = nextCart?.items || []
-
-            setCart(nextCart)
 
             const availableIds = nextItems
                 .map(cartItem => cartItem.item?._id)
@@ -41,18 +42,14 @@ function useCart() {
                 previous.filter(id => availableIds.includes(String(id)))
             )
         } catch (error) {
-            showMessage(
-                error.response?.data?.message || 'Unable to load your cart.',
-                'error'
-            )
-        } finally {
-            setLoading(false)
+            showMessage(error.message, 'error')
         }
-    }, [])
+    }, [dispatch])
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- load cart on page open
         loadCart()
-    }, [loadCart])
+    }, [loadCart])    
 
     const cartItems = useMemo(
         () => cart?.items || [],
@@ -163,21 +160,12 @@ function useCart() {
         setUpdatingItemId(id)
 
         try {
-            const data = await updateCartItemRequest(id, Number(quantity))
-
-            if (data.cart) {
-                setCart(data.cart)
-            } else {
-                await loadCart()
-            }
+            const data = await dispatch(updateCartQuantity(id, Number(quantity)))
 
             showMessage(data.message || 'Cart quantity updated.')
             return true
         } catch (error) {
-            showMessage(
-                error.response?.data?.message || 'Unable to update quantity.',
-                'error'
-            )
+            showMessage(error.message, 'error')
 
             await loadCart()
             return false
@@ -193,13 +181,7 @@ function useCart() {
         setRemovingItemId(id)
 
         try {
-            const data = await removeCartItemRequest(id)
-
-            if (data.cart) {
-                setCart(data.cart)
-            } else {
-                await loadCart()
-            }
+            const data = await dispatch(removeFromCart(id))
 
             setSelectedItemIds(previous =>
                 previous.filter(selectedId => selectedId !== id)
@@ -208,10 +190,7 @@ function useCart() {
             showMessage(data.message || 'Item removed from cart.')
             return true
         } catch (error) {
-            showMessage(
-                error.response?.data?.message || 'Unable to remove item.',
-                'error'
-            )
+            showMessage(error.message, 'error')
             return false
         } finally {
             setRemovingItemId(null)
@@ -233,21 +212,14 @@ function useCart() {
         setDeletingSelected(true)
 
         try {
-            for (const itemId of selectedItemIds) {
-                await removeCartItemRequest(itemId)
-            }
+            // Removes each item, then refreshes the cart in the store
+            await dispatch(removeManyFromCart(selectedItemIds))
 
             setSelectedItemIds([])
-            await loadCart()
             showMessage('Selected items were removed.')
             return true
         } catch (error) {
-            showMessage(
-                error.response?.data?.message ||
-                    'Some items could not be removed. Refreshing your cart.',
-                'error'
-            )
-            await loadCart()
+            showMessage(error.message, 'error')
             return false
         } finally {
             setDeletingSelected(false)
@@ -271,19 +243,15 @@ function useCart() {
         setCheckingOut(true)
 
         try {
-            const data = await checkoutCart(selectedItemIds)
+            // Places the order, then refreshes the cart in the store
+            const data = await dispatch(checkoutCart(selectedItemIds))
 
             setSelectedItemIds([])
-            await loadCart()
 
             showMessage(data.message || 'Checkout completed successfully.')
             return true
         } catch (error) {
-            showMessage(
-                error.response?.data?.message || 'Checkout failed.',
-                'error'
-            )
-            await loadCart()
+            showMessage(error.message, 'error')
             return false
         } finally {
             setCheckingOut(false)

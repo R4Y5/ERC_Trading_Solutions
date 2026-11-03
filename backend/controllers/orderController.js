@@ -3,6 +3,7 @@ const Order = require('../models/orderModel')
 const Cart = require('../models/cartModel')
 const Item = require('../models/itemModel')
 const { sendOrderEmail } = require('../utils/mailer')
+const sendOrderStatusEmail = require('../utils/sendOrderStatusEmail')
 
 // Create an order from selected cart items or the entire cart
 const createOrder = async (req, res) => {
@@ -362,6 +363,19 @@ const updateOrderStatus = async (req, res) => {
             })
         }
 
+        // Same rule the admin page enforces: finished orders are locked.
+        if (['Delivered', 'Cancelled'].includes(order.status)) {
+            return res.status(400).json({
+                message: 'Delivered or cancelled orders cannot be updated.'
+            })
+        }
+
+        if (order.status === status) {
+            return res.status(400).json({
+                message: `Order is already ${status}.`
+            })
+        }
+
         order.status = status
 
         if (status === 'Shipped' && !order.date_shipped) {
@@ -380,19 +394,28 @@ const updateOrderStatus = async (req, res) => {
             .populate('customer')
             .populate('order_lines.item')
 
+        // Email the customer the updated order: item list, subtotals,
+        // grand total, and a PDF receipt attachment.
+        // The status change is already saved, so a mail failure
+        // is reported back to the admin instead of failing the request.
+        let emailSent = false
+        let emailError = null
+
         try {
-            await sendOrderEmail(
-                updatedOrder,
-                `Your order status is now ${updatedOrder.status}`,
-                `The status of your order has been updated to ${updatedOrder.status}.`
-            )
+            await sendOrderStatusEmail(updatedOrder)
+            emailSent = true
         } catch (mailError) {
+            emailError = mailError.message
             console.error('Order status email failed:', mailError.message)
         }
 
         return res.status(200).json({
-            message: 'Order status updated successfully',
-            order: updatedOrder
+            message: emailSent
+                ? `Order status updated to ${status}. The customer was emailed a receipt.`
+                : `Order status updated to ${status}, but the email could not be sent.`,
+            order: updatedOrder,
+            emailSent,
+            emailError
         })
     } catch (error) {
         return res.status(500).json({

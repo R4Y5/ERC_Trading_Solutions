@@ -1,31 +1,10 @@
-const nodemailer = require('nodemailer')
-
-// Reusable mail sender.
+// Uses the shared mailer (utils/mailer.js) so every email in the app
+// reads the same SMTP settings from backend/.env:
+//   SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD,
+//   SMTP_FROM_EMAIL, SMTP_FROM_NAME
 // options: { to, subject, html, text, attachments }
-// attachments follow the Nodemailer format, e.g.
-// [{ filename: 'receipt.pdf', content: <Buffer>, contentType: 'application/pdf' }]
-const sendEmail = async (options) => {
-    const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: Number(process.env.SMTP_PORT) || 587,
-        secure: Number(process.env.SMTP_PORT) === 465,
-        auth: {
-            user: process.env.SMTP_EMAIL,
-            pass: process.env.SMTP_PASSWORD
-        }
-    })
+const { sendMail } = require('./mailer')
 
-    const fromName = process.env.SMTP_FROM_NAME || 'ERC Trading Solutions'
-    const fromEmail = process.env.SMTP_FROM_EMAIL || process.env.SMTP_EMAIL
-
-    return transporter.sendMail({
-        from: `${fromName} <${fromEmail}>`,
-        to: options.to,
-        subject: options.subject,
-        text: options.text,
-        html: options.html,
-        attachments: options.attachments || []
-    })
-}
+const sendEmail = (options) => sendMail(options)
 
 module.exports = sendEmail

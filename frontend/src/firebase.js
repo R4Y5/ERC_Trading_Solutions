@@ -40,6 +40,24 @@ const CANCELLED_CODES = [
     'auth/user-cancelled'
 ]
 
+// Plain-English fixes for the most common Firebase setup problems
+const FIREBASE_ERROR_HINTS = {
+    'auth/popup-blocked':
+        'Your browser blocked the Google sign-in popup. Please allow popups for this site.',
+    'auth/unauthorized-domain':
+        'This domain is not authorized for Google sign-in. Add it in Firebase Console → Authentication → Settings → Authorized domains.',
+    'auth/operation-not-allowed':
+        'Google sign-in is not enabled. In Firebase Console go to Authentication → Sign-in method, enable Google, and click Save.',
+    'auth/configuration-not-found':
+        'Firebase Authentication is not set up. In Firebase Console open Authentication, click Get started, then enable Google under Sign-in method.',
+    'auth/invalid-api-key':
+        'The Firebase API key is invalid. Check VITE_FIREBASE_API_KEY in frontend/.env (no quotes or spaces), then restart the frontend.',
+    'auth/network-request-failed':
+        'Could not reach Google. Check your internet connection and try again.',
+    'auth/internal-error':
+        'Firebase returned an internal error. Check that all VITE_FIREBASE_* values in frontend/.env are correct, then restart the frontend.'
+}
+
 // Opens the Google popup and returns a Firebase ID token for the backend.
 // Resolves with null if the user closes the popup.
 export const signInWithGoogle = async () => {
@@ -63,10 +81,21 @@ export const signInWithGoogle = async () => {
             throw new Error('Your browser blocked the Google sign-in popup. Please allow popups for this site.', { cause: error })
         }
 
-        if (error.code === 'auth/unauthorized-domain') {
-            throw new Error('This domain is not authorized for Google sign-in. Add it in Firebase Console → Authentication → Settings → Authorized domains.', { cause: error })
+        // Show the full Firebase error in the browser console (F12)
+        console.error('Firebase Google sign-in error:', error.code, error.message)
+
+        const hint = FIREBASE_ERROR_HINTS[error.code] ||
+            (String(error.code || '').startsWith('auth/api-key')
+                ? FIREBASE_ERROR_HINTS['auth/invalid-api-key']
+                : null)
+
+        if (hint) {
+            throw new Error(hint, { cause: error })
         }
 
-        throw new Error('Google sign-in failed. Please try again.', { cause: error })
+        throw new Error(
+            `Google sign-in failed (${error.code || error.message}). Please try again.`,
+            { cause: error }
+        )
     }
 }

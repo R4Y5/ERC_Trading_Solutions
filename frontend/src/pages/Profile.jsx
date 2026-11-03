@@ -1,5 +1,5 @@
 
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 import CustomerNavbar from "../components/CustomerNavbar";
 import ProfilePicture from "../components/profile/ProfilePicture";
@@ -7,7 +7,7 @@ import ProfileAccountInfo from "../components/profile/ProfileAccountInfo";
 import ProfileForm from "../components/profile/ProfileForm";
 
 import useProfile from "../hooks/useProfile";
-import { getUser } from "../utils/auth";
+import { useSelector } from "react-redux";
 
 function Profile() {
   const {
@@ -28,7 +28,12 @@ function Profile() {
     fetchProfile,
   } = useProfile();
 
-  const storedUser = getUser();
+  const storedUser = useSelector((state) => state.auth.user);
+
+  // Set by Google sign-in when the account still needs a phone number
+  const [searchParams] = useSearchParams();
+  const needsCompletion =
+    searchParams.get("complete") === "1" && !user?.customer?.phone;
 
   if (loading) {
     return (
@@ -77,6 +82,14 @@ function Profile() {
           View and manage your personal information.
         </p>
 
+        {needsCompletion && (
+          <p role="status" style={styles.notice}>
+            Welcome! You signed in with Google. Please click Edit and add your
+            contact number and the rest of your details to finish setting up
+            your account.
+          </p>
+        )}
+
         {message && <p style={styles.success}>{message}</p>}
         {error && <p style={styles.error}>{error}</p>}
 
@@ -109,6 +122,13 @@ function Profile() {
 }
 
 const styles = {
+  notice: {
+    backgroundColor: "#eff6ff",
+    border: "1px solid #bfdbfe",
+    color: "#1e3a8a",
+    padding: "12px 14px",
+    borderRadius: "6px",
+  },
   container: {
     minHeight: "100vh",
     backgroundColor: "#f4f6f9",
