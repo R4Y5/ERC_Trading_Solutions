@@ -1,3 +1,13 @@
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import Grid from "@mui/material/Grid";
+import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
+import Button from "@mui/material/Button";
+import InputAdornment from "@mui/material/InputAdornment";
+import FilterAltOffOutlinedIcon from "@mui/icons-material/FilterAltOffOutlined";
+
+// Price, category, rating, and review filters for the shop (MP2)
 function ShopFilters({
   categories,
   minPrice,
@@ -14,139 +24,118 @@ function ShopFilters({
   setSortBy,
   onReset,
 }) {
-  const fieldStyle = {
-    display: "flex",
-    flexDirection: "column",
-    gap: 6,
-    minWidth: 0,
-  };
-
-  const inputStyle = {
-    width: "100%",
-    boxSizing: "border-box",
-    padding: 10,
-    border: "1px solid #d1d5db",
-    borderRadius: 8,
-    backgroundColor: "#fff",
+  const peso = {
+    input: {
+      startAdornment: <InputAdornment position="start">₱</InputAdornment>,
+    },
+    htmlInput: { min: 0 },
   };
 
   return (
-    <section
-      aria-label="Product filters"
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-        gap: 14,
-        padding: 16,
-        marginBottom: 24,
-        border: "1px solid #e5e7eb",
-        borderRadius: 12,
-        backgroundColor: "#f9fafb",
-      }}
-    >
-      <label style={fieldStyle}>
-        Minimum price (₱)
-        <input
-          type="number"
-          min="0"
-          value={minPrice}
-          onChange={(event) => setMinPrice(event.target.value)}
-          placeholder="No minimum"
-          style={inputStyle}
-        />
-      </label>
+    <Card>
+      <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
+        <Grid container spacing={2} sx={{ alignItems: "center" }}>
+          <Grid size={{ xs: 6, sm: 4, md: 1.6 }}>
+            <TextField
+              label="Min price"
+              type="number"
+              value={minPrice}
+              onChange={(event) => setMinPrice(event.target.value)}
+              placeholder="0"
+              slotProps={peso}
+            />
+          </Grid>
 
-      <label style={fieldStyle}>
-        Maximum price (₱)
-        <input
-          type="number"
-          min="0"
-          value={maxPrice}
-          onChange={(event) => setMaxPrice(event.target.value)}
-          placeholder="No maximum"
-          style={inputStyle}
-        />
-      </label>
+          <Grid size={{ xs: 6, sm: 4, md: 1.6 }}>
+            <TextField
+              label="Max price"
+              type="number"
+              value={maxPrice}
+              onChange={(event) => setMaxPrice(event.target.value)}
+              placeholder="Any"
+              slotProps={peso}
+            />
+          </Grid>
 
-      <label style={fieldStyle}>
-        Category
-        <select
-          value={selectedCategory}
-          onChange={(event) => setSelectedCategory(event.target.value)}
-          style={inputStyle}
-        >
-          <option value="all">All categories</option>
-          {categories.map((category) => (
-            <option key={category} value={category}>
-              {category}
-            </option>
-          ))}
-        </select>
-      </label>
+          <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+            <TextField
+              select
+              label="Category"
+              value={selectedCategory}
+              onChange={(event) => setSelectedCategory(event.target.value)}
+              slotProps={{
+                inputLabel: { shrink: true },
+                select: { displayEmpty: true },
+              }}
+            >
+              <MenuItem value="">All categories</MenuItem>
+              {categories.map((category) => (
+                <MenuItem key={category} value={category}>
+                  {category}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Grid>
 
-      <label style={fieldStyle}>
-        Minimum rating
-        <select
-          value={minRating}
-          onChange={(event) => setMinRating(event.target.value)}
-          style={inputStyle}
-        >
-          <option value="0">Any rating</option>
-          <option value="1">1 star and up</option>
-          <option value="2">2 stars and up</option>
-          <option value="3">3 stars and up</option>
-          <option value="4">4 stars and up</option>
-          <option value="5">5 stars only</option>
-        </select>
-      </label>
+          <Grid size={{ xs: 6, sm: 4, md: 1.8 }}>
+            <TextField
+              select
+              label="Minimum rating"
+              value={minRating}
+              onChange={(event) => setMinRating(event.target.value)}
+            >
+              <MenuItem value="0">Any rating</MenuItem>
+              <MenuItem value="1">1★ & up</MenuItem>
+              <MenuItem value="2">2★ & up</MenuItem>
+              <MenuItem value="3">3★ & up</MenuItem>
+              <MenuItem value="4">4★ & up</MenuItem>
+              <MenuItem value="5">5★ only</MenuItem>
+            </TextField>
+          </Grid>
 
-      <label style={fieldStyle}>
-        Customer reviews
-        <select
-          value={reviewFilter}
-          onChange={(event) => setReviewFilter(event.target.value)}
-          style={inputStyle}
-        >
-          <option value="all">All products</option>
-          <option value="reviewed">Has reviews</option>
-          <option value="5">At least 5 reviews</option>
-          <option value="10">At least 10 reviews</option>
-        </select>
-      </label>
+          <Grid size={{ xs: 6, sm: 4, md: 1.8 }}>
+            <TextField
+              select
+              label="Customer reviews"
+              value={reviewFilter}
+              onChange={(event) => setReviewFilter(event.target.value)}
+            >
+              <MenuItem value="all">All products</MenuItem>
+              <MenuItem value="reviewed">Has reviews</MenuItem>
+              <MenuItem value="5">5+ reviews</MenuItem>
+              <MenuItem value="10">10+ reviews</MenuItem>
+            </TextField>
+          </Grid>
 
-      <label style={fieldStyle}>
-        Sort by
-        <select
-          value={sortBy}
-          onChange={(event) => setSortBy(event.target.value)}
-          style={inputStyle}
-        >
-          <option value="newest">Newest</option>
-          <option value="name">Product name</option>
-          <option value="price-low">Price: low to high</option>
-          <option value="price-high">Price: high to low</option>
-          <option value="rating">Highest rating</option>
-          <option value="reviews">Most reviews</option>
-        </select>
-      </label>
+          <Grid size={{ xs: 12, sm: 4, md: 1.8 }}>
+            <TextField
+              select
+              label="Sort by"
+              value={sortBy}
+              onChange={(event) => setSortBy(event.target.value)}
+            >
+              <MenuItem value="newest">Newest</MenuItem>
+              <MenuItem value="name">Name A–Z</MenuItem>
+              <MenuItem value="price-low">Price: low to high</MenuItem>
+              <MenuItem value="price-high">Price: high to low</MenuItem>
+              <MenuItem value="rating">Highest rating</MenuItem>
+              <MenuItem value="reviews">Most reviews</MenuItem>
+            </TextField>
+          </Grid>
 
-      <div style={{ display: "flex", alignItems: "end" }}>
-        <button
-          type="button"
-          onClick={onReset}
-          style={{
-            width: "100%",
-            padding: 10,
-            border: "1px solid #d1d5db",
-            borderRadius: 8,
-            backgroundColor: "#fff",
-            cursor: "pointer",
-          }}
-        >
-          Reset filters
-        </button>
-      </div>
-    </section>
+          <Grid size={{ xs: 12, md: 1.4 }}>
+            <Button
+              fullWidth
+              variant="outlined"
+              startIcon={<FilterAltOffOutlinedIcon />}
+              onClick={onReset}
+            >
+              Reset
+            </Button>
+          </Grid>
+        </Grid>
+      </CardContent>
+    </Card>
   );
 }
 

@@ -1,5 +1,9 @@
 import { useState } from 'react'
-import { Formik, Form, Field, ErrorMessage } from 'formik'
+import { Formik, Form, Field } from 'formik'
+import TextField from '@mui/material/TextField'
+import Button from '@mui/material/Button'
+import Stack from '@mui/material/Stack'
+import Alert from '@mui/material/Alert'
 import * as Yup from 'yup'
 import { useDispatch } from 'react-redux'
 import { login } from '../../actions/authActions'
@@ -46,53 +50,50 @@ function LoginForm({ onLoginSuccess }) {
             validationSchema={loginSchema}
             onSubmit={handleSubmit}
         >
-            {({ isSubmitting }) => (
-                <Form>
-                    <div>
-                        <label htmlFor="email">Email Address</label>
-
+            {({ isSubmitting, errors, touched }) => (
+                <Form noValidate>
+                    <Stack spacing={2.5}>
                         <Field
+                            as={TextField}
                             id="email"
                             name="email"
                             type="email"
+                            label="Email Address"
                             autoComplete="email"
-                            placeholder="Enter your email"
+                            placeholder="you@example.com"
+                            error={Boolean(touched.email && errors.email)}
+                            helperText={touched.email && errors.email}
+                            size="medium"
                         />
-
-                        <ErrorMessage
-                            name="email"
-                            component="p"
-                            className="error"
-                        />
-                    </div>
-
-                    <div>
-                        <label htmlFor="password">Password</label>
 
                         <Field
+                            as={TextField}
                             id="password"
                             name="password"
                             type="password"
+                            label="Password"
                             autoComplete="current-password"
-                            placeholder="Enter your password"
+                            error={Boolean(touched.password && errors.password)}
+                            helperText={touched.password && errors.password}
+                            size="medium"
                         />
 
-                        <ErrorMessage
-                            name="password"
-                            component="p"
-                            className="error"
-                        />
-                    </div>
+                        {serverError && (
+                            <Alert severity="error" role="alert">
+                                {serverError}
+                            </Alert>
+                        )}
 
-                    {serverError && (
-                        <p role="alert" className="error">
-                            {serverError}
-                        </p>
-                    )}
-
-                    <button type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? 'Logging in...' : 'Log In'}
-                    </button>
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            size="large"
+                            fullWidth
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? 'Logging in...' : 'Log In'}
+                        </Button>
+                    </Stack>
                 </Form>
             )}
         </Formik>

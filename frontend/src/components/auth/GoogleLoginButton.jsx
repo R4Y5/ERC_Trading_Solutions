@@ -76,8 +76,8 @@ function GoogleLoginButton({ label = 'Continue with Google' }) {
 
 const styles = {
     wrapper: {
-        margin: '16px auto',
-        maxWidth: 360
+        marginTop: 20,
+        width: '100%'
     },
     divider: {
         display: 'flex',

@@ -1,3 +1,9 @@
+import TextField from '@mui/material/TextField'
+import MenuItem from '@mui/material/MenuItem'
+import Typography from '@mui/material/Typography'
+import LinearProgress from '@mui/material/LinearProgress'
+import Box from '@mui/material/Box'
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 
 const FINAL_STATUSES = ['Delivered', 'Cancelled']
 
@@ -5,39 +11,41 @@ function AdminOrderStatus({ order, onUpdateStatus, updating }) {
     const isFinalized = FINAL_STATUSES.includes(order.status)
 
     return (
-        <div>
-            <p>
-                Status: <strong>{order.status}</strong>
-            </p>
-
-            <label htmlFor={`status-${order._id}`}>
-                Change Status:
-            </label>
-
-            <br />
-
-            <select
+        <Box>
+            <TextField
+                select
                 id={`status-${order._id}`}
+                label="Change status"
                 value={order.status}
                 disabled={isFinalized || updating}
-                onChange={(event) =>
-                    onUpdateStatus(order._id, event.target.value)
-                }
+                onChange={(event) => onUpdateStatus(order._id, event.target.value)}
             >
-                <option value="Pending">Pending</option>
-                <option value="Shipped">Shipped</option>
-                <option value="Delivered">Delivered</option>
-                <option value="Cancelled">Cancelled</option>
-            </select>
+                <MenuItem value="Pending">Pending</MenuItem>
+                <MenuItem value="Shipped">Shipped</MenuItem>
+                <MenuItem value="Delivered">Delivered</MenuItem>
+                <MenuItem value="Cancelled">Cancelled</MenuItem>
+            </TextField>
 
-            {updating && <p>Updating status...</p>}
+            {updating && (
+                <Box sx={{ mt: 1 }}>
+                    <LinearProgress />
+                    <Typography variant="caption" color="text.secondary">
+                        Updating status and emailing the customer...
+                    </Typography>
+                </Box>
+            )}
 
             {isFinalized && (
-                <p>
-                    This order is finalized. Its status can no longer be changed.
-                </p>
+                <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}
+                >
+                    <LockOutlinedIcon sx={{ fontSize: 14 }} />
+                    This order is finalized and can no longer be changed.
+                </Typography>
             )}
-        </div>
+        </Box>
     )
 }
 

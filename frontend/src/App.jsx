@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Home from "./pages/Home";
 
 import Register from "./pages/Register";
 import CompleteRegistration from "./pages/CompleteRegistration";
@@ -22,7 +23,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         {/* Home */}
-        <Route path="/" element={<h1>ERC Trading Solutions</h1>} />
+        <Route path="/" element={<Home />} />
 
         {/* Registration */}
         <Route path="/register" element={<Register />} />
@@ -129,6 +130,8 @@ function App() {
             </AdminRoute>
           }
         />
+        {/* Unknown URLs go back to the home page */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

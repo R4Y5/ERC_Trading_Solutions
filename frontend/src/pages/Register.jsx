@@ -1,7 +1,11 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Formik, Form, Field, ErrorMessage } from "formik";
+import { Formik, Form, Field } from "formik";
+import TextField from "@mui/material/TextField";
+import Button from "@mui/material/Button";
+import Stack from "@mui/material/Stack";
+import Alert from "@mui/material/Alert";
+import AuthLayout from "../components/layout/AuthLayout";
 import * as Yup from "yup";
 import api from "../services/api";
 import GoogleLoginButton from "../components/auth/GoogleLoginButton";
@@ -65,11 +69,15 @@ function Register() {
   };
 
   return (
-    <div>
-      <h1>Create an Account</h1>
-
-      <p>Enter your email address to get started.</p>
-
+    <AuthLayout
+      title="Create an account"
+      subtitle="Enter your email address to get started."
+      footer={
+        <>
+          Already have an account? <Link to="/login">Log in</Link>
+        </>
+      }
+    >
       <Formik
         initialValues={{
           email: "",
@@ -79,66 +87,43 @@ function Register() {
       >
         {({ errors, touched }) => (
           <Form noValidate>
-            <div>
-              <label htmlFor="email">
-                Email Address
-              </label>
-
+            <Stack spacing={2.5}>
               <Field
+                as={TextField}
                 id="email"
                 name="email"
                 type="email"
+                label="Email Address"
                 autoComplete="email"
-                aria-invalid={Boolean(
-                  touched.email && errors.email
-                )}
-                aria-describedby={
-                  touched.email && errors.email
-                    ? "email-error"
-                    : undefined
-                }
+                placeholder="you@example.com"
+                size="medium"
                 disabled={loading}
+                error={Boolean(touched.email && errors.email)}
+                helperText={touched.email && errors.email}
               />
 
-              <ErrorMessage name="email">
-                {(errorMessage) => (
-                  <p
-                    id="email-error"
-                    role="alert"
-                    style={{
-                      color: "#b91c1c",
-                      marginTop: "5px",
-                    }}
-                  >
-                    {errorMessage}
-                  </p>
-                )}
-              </ErrorMessage>
-            </div>
+              {message && (
+                <Alert severity="error" role="alert">
+                  {message}
+                </Alert>
+              )}
 
-            <button
-              type="submit"
-              disabled={loading}
-            >
-              {loading ? "Please wait..." : "Continue"}
-            </button>
+              <Button
+                type="submit"
+                variant="contained"
+                size="large"
+                fullWidth
+                disabled={loading}
+              >
+                {loading ? "Please wait..." : "Continue"}
+              </Button>
+            </Stack>
           </Form>
         )}
       </Formik>
 
       <GoogleLoginButton label="Sign up with Google" />
-
-      {message && (
-        <p role="alert" style={{ color: "#b91c1c" }}>
-          {message}
-        </p>
-      )}
-
-      <p>
-        Already have an account?{" "}
-        <Link to="/login">Log in</Link>
-      </p>
-    </div>
+    </AuthLayout>
   );
 }
 

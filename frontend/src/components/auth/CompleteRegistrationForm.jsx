@@ -122,7 +122,7 @@ function CompleteRegistrationForm({
       onSubmit={onSubmit}
     >
       {({ isSubmitting }) => (
-        <Form noValidate>
+        <Form noValidate className="form-grid">
           <div>
             <label htmlFor="title">Title</label>
             <Field as="select" id="title" name="title">
@@ -132,31 +132,31 @@ function CompleteRegistrationForm({
               <option value="Mrs.">Mrs.</option>
               <option value="Dr.">Dr.</option>
             </Field>
-            <ErrorMessage name="title" component="p" />
+            <ErrorMessage className="error" name="title" component="p" />
           </div>
 
           <div>
             <label htmlFor="fname">First Name</label>
             <Field id="fname" name="fname" autoComplete="given-name" />
-            <ErrorMessage name="fname" component="p" />
+            <ErrorMessage className="error" name="fname" component="p" />
           </div>
 
           <div>
             <label htmlFor="lname">Last Name</label>
             <Field id="lname" name="lname" autoComplete="family-name" />
-            <ErrorMessage name="lname" component="p" />
+            <ErrorMessage className="error" name="lname" component="p" />
           </div>
 
           <div>
             <label htmlFor="username">Username</label>
             <Field id="username" name="username" autoComplete="username" />
-            <ErrorMessage name="username" component="p" />
+            <ErrorMessage className="error" name="username" component="p" />
           </div>
 
           <div>
             <label htmlFor="phone">Phone Number</label>
             <Field id="phone" name="phone" type="tel" autoComplete="tel" />
-            <ErrorMessage name="phone" component="p" />
+            <ErrorMessage className="error" name="phone" component="p" />
           </div>
 
           <div>
@@ -168,7 +168,7 @@ function CompleteRegistrationForm({
               <option value="Other">Other</option>
               <option value="Prefer not to say">Prefer not to say</option>
             </Field>
-            <ErrorMessage name="gender" component="p" />
+            <ErrorMessage className="error" name="gender" component="p" />
           </div>
 
           <div>
@@ -179,7 +179,7 @@ function CompleteRegistrationForm({
               type="date"
               max={localToday}
             />
-            <ErrorMessage name="date_of_birth" component="p" />
+            <ErrorMessage className="error" name="date_of_birth" component="p" />
           </div>
 
           <div>
@@ -189,13 +189,13 @@ function CompleteRegistrationForm({
               name="addressline"
               autoComplete="street-address"
             />
-            <ErrorMessage name="addressline" component="p" />
+            <ErrorMessage className="error" name="addressline" component="p" />
           </div>
 
           <div>
             <label htmlFor="town">Town or City</label>
             <Field id="town" name="town" autoComplete="address-level2" />
-            <ErrorMessage name="town" component="p" />
+            <ErrorMessage className="error" name="town" component="p" />
           </div>
 
           <RegistrationProfilePicture
@@ -211,7 +211,7 @@ function CompleteRegistrationForm({
               type="password"
               autoComplete="new-password"
             />
-            <ErrorMessage name="password" component="p" />
+            <ErrorMessage className="error" name="password" component="p" />
           </div>
 
           <div>
@@ -222,12 +222,12 @@ function CompleteRegistrationForm({
               type="password"
               autoComplete="new-password"
             />
-            <ErrorMessage name="confirmPassword" component="p" />
+            <ErrorMessage className="error" name="confirmPassword" component="p" />
           </div>
 
-          {serverError && <p role="alert">{serverError}</p>}
+          {serverError && <p role="alert" className="error form-grid-full">{serverError}</p>}
 
-          <button type="submit" disabled={loading || isSubmitting}>
+          <button type="submit" className="form-grid-full" disabled={loading || isSubmitting}>
             {loading || isSubmitting
               ? "Completing Registration..."
               : "Complete Registration"}

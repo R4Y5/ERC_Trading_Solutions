@@ -1,4 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
+import Button from '@mui/material/Button'
+import AuthLayout from '../components/layout/AuthLayout'
 import { useState } from 'react'
 import CompleteRegistrationForm from '../components/auth/CompleteRegistrationForm'
 import { useCompleteRegistration } from '../hooks/useCompleteRegistration'
@@ -36,27 +38,29 @@ function CompleteRegistration() {
 
     if (!registrationToken || !registrationEmail) {
         return (
-            <div>
-                <h1>Registration Session Missing</h1>
-                <p>
-                    Please start the registration process again.
-                </p>
-
-                <Link to="/register">
+            <AuthLayout
+                title="Registration session missing"
+                subtitle="Please start the registration process again."
+            >
+                <Button component={Link} to="/register" variant="contained" fullWidth>
                     Go to Registration
-                </Link>
-            </div>
+                </Button>
+            </AuthLayout>
         )
     }
 
     return (
-        <div>
-            <h1>Complete Your Registration</h1>
-
-            <p>
-                Registering with: <strong>{registrationEmail}</strong>
-            </p>
-
+        <AuthLayout
+            title="Complete your registration"
+            subtitle={<>Registering with: <strong>{registrationEmail}</strong></>}
+            maxWidth={640}
+            footer={
+                <>
+                    Already have an account?{' '}
+                    <Link to="/login">Log in</Link>
+                </>
+            }
+        >
             <CompleteRegistrationForm
                 onSubmit={handleSubmit}
                 profilePicture={profilePicture}
@@ -64,12 +68,7 @@ function CompleteRegistration() {
                 loading={loading}
                 serverError={error}
             />
-
-            <p>
-                Already have an account?{' '}
-                <Link to="/login">Log in</Link>
-            </p>
-        </div>
+        </AuthLayout>
     )
 }
 

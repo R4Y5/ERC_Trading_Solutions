@@ -92,6 +92,13 @@ const createReview = async (req, res) => {
             })
         }
 
+        // Only customers who actually received the product may review it
+        if (order.status !== 'Delivered') {
+            return res.status(403).json({
+                message: 'You can review items only after your order has been delivered.'
+            })
+        }
+
         const item = await Item.findOne({
             _id: item_id,
             deleted_at: null

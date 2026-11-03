@@ -10,9 +10,26 @@ import {
     CartesianGrid,
     Tooltip
 } from 'recharts'
+import Card from '@mui/material/Card'
+import CardContent from '@mui/material/CardContent'
+import Typography from '@mui/material/Typography'
+import Stack from '@mui/material/Stack'
+import Grid from '@mui/material/Grid'
+import Box from '@mui/material/Box'
+import TextField from '@mui/material/TextField'
+import MenuItem from '@mui/material/MenuItem'
+import Chip from '@mui/material/Chip'
+import Alert from '@mui/material/Alert'
+import Skeleton from '@mui/material/Skeleton'
+import ToggleButton from '@mui/material/ToggleButton'
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import Paper from '@mui/material/Paper'
+import BarChartIcon from '@mui/icons-material/BarChart'
+import ShowChartIcon from '@mui/icons-material/ShowChart'
 import useSalesReport, { PRESETS, toDateInput } from '../../hooks/useSalesReport'
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const CHART_COLOR = '#1e3a8a'
 
 const formatPeso = (value) =>
     '₱' +
@@ -35,87 +52,30 @@ const formatPeriod = (period) => {
     return d ? `${month} ${Number(d)}` : `${month} ${y}`
 }
 
-const styles = {
-    card: {
-        border: '1px solid var(--border)',
-        borderRadius: 12,
-        padding: 20,
-        marginTop: 20,
-        boxShadow: 'var(--shadow)',
-        background: 'var(--bg)'
-    },
-    controls: {
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: 12,
-        alignItems: 'flex-end',
-        marginBottom: 12
-    },
-    field: {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 4,
-        fontSize: 14
-    },
-    input: {
-        padding: '6px 8px',
-        borderRadius: 6,
-        border: '1px solid var(--border)',
-        font: 'inherit',
-        fontSize: 14
-    },
-    presets: {
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: 8,
-        marginBottom: 16
-    },
-    button: (active) => ({
-        padding: '6px 12px',
-        borderRadius: 999,
-        border: `1px solid ${active ? 'var(--accent-border)' : 'var(--border)'}`,
-        background: active ? 'var(--accent-bg)' : 'transparent',
-        color: active ? 'var(--accent)' : 'inherit',
-        cursor: 'pointer',
-        fontSize: 14
-    }),
-    stats: {
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-        gap: 12,
-        marginBottom: 20
-    },
-    stat: {
-        border: '1px solid var(--border)',
-        borderRadius: 8,
-        padding: 12
-    },
-    statLabel: { fontSize: 13, margin: 0 },
-    statValue: { fontSize: 22, fontWeight: 600, color: 'var(--text-h)', margin: 0 }
-}
-
 function SalesTooltip({ active, payload }) {
     if (!active || !payload || payload.length === 0) return null
     const row = payload[0].payload
 
     return (
-        <div
-            style={{
-                background: 'var(--bg)',
-                border: '1px solid var(--border)',
-                borderRadius: 8,
-                padding: '8px 12px',
-                fontSize: 14
-            }}
-        >
+        <Paper variant="outlined" sx={{ px: 1.5, py: 1, fontSize: 14 }}>
             <strong>{formatPeriod(row.period)}</strong>
             <div>Sales: {formatPeso(row.sales)}</div>
             <div>Orders: {row.orders}</div>
             <div>Items sold: {row.itemsSold}</div>
-        </div>
+        </Paper>
     )
 }
 
+function StatTile({ label, value }) {
+    return (
+        <Paper variant="outlined" sx={{ p: 1.5, height: '100%' }}>
+            <Typography variant="body2" color="text.secondary">{label}</Typography>
+            <Typography sx={{ fontSize: 22, fontWeight: 800 }}>{value}</Typography>
+        </Paper>
+    )
+}
+
+// Sales chart with a date range filter (Quiz 1)
 function SalesChart() {
     const {
         start,
@@ -137,156 +97,164 @@ function SalesChart() {
 
     const commonAxes = (
         <>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
             <XAxis
                 dataKey="period"
                 tickFormatter={formatPeriod}
-                tick={{ fontSize: 12, fill: 'var(--text)' }}
+                tick={{ fontSize: 12, fill: '#4b5563' }}
                 minTickGap={16}
             />
             <YAxis
                 tickFormatter={formatPesoShort}
-                tick={{ fontSize: 12, fill: 'var(--text)' }}
+                tick={{ fontSize: 12, fill: '#4b5563' }}
                 width={70}
             />
-            <Tooltip content={<SalesTooltip />} cursor={{ fill: 'var(--accent-bg)' }} />
+            <Tooltip content={<SalesTooltip />} cursor={{ fill: 'rgba(30,58,138,0.06)' }} />
         </>
     )
 
     return (
-        <section style={styles.card} aria-labelledby="sales-chart-title">
-            <h2 id="sales-chart-title" style={{ marginTop: 0 }}>Sales</h2>
+        <Card component="section" aria-labelledby="sales-chart-title">
+            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+                <Stack
+                    direction={{ xs: 'column', sm: 'row' }}
+                    spacing={1}
+                    sx={{ justifyContent: 'space-between', alignItems: { sm: 'center' }, mb: 2 }}
+                >
+                    <Box>
+                        <Typography id="sales-chart-title" variant="h2" sx={{ mb: 0 }}>
+                            Sales
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                            Based on the date each order was placed. Cancelled orders are excluded.
+                        </Typography>
+                    </Box>
 
-            <div style={styles.controls}>
-                <label style={styles.field}>
-                    Start date
-                    <input
-                        type="date"
-                        style={styles.input}
-                        value={start}
-                        max={end || today}
-                        onChange={(e) => setStart(e.target.value)}
-                    />
-                </label>
-
-                <label style={styles.field}>
-                    End date
-                    <input
-                        type="date"
-                        style={styles.input}
-                        value={end}
-                        min={start}
-                        max={today}
-                        onChange={(e) => setEnd(e.target.value)}
-                    />
-                </label>
-
-                <label style={styles.field}>
-                    Group by
-                    <select
-                        style={styles.input}
-                        value={groupBy}
-                        onChange={(e) => setGroupBy(e.target.value)}
+                    <ToggleButtonGroup
+                        size="small"
+                        exclusive
+                        color="primary"
+                        value={chartType}
+                        onChange={(_, value) => value && setChartType(value)}
+                        aria-label="Chart type"
                     >
-                        <option value="day">Day</option>
-                        <option value="month">Month</option>
-                    </select>
-                </label>
+                        <ToggleButton value="bar" aria-label="Bar">
+                            <BarChartIcon fontSize="small" sx={{ mr: 0.5 }} /> Bar
+                        </ToggleButton>
+                        <ToggleButton value="line" aria-label="Line">
+                            <ShowChartIcon fontSize="small" sx={{ mr: 0.5 }} /> Line
+                        </ToggleButton>
+                    </ToggleButtonGroup>
+                </Stack>
 
-                <div style={{ ...styles.field, marginLeft: 'auto' }}>
-                    Chart
-                    <div style={{ display: 'flex', gap: 6 }}>
-                        <button
-                            type="button"
-                            style={styles.button(chartType === 'bar')}
-                            onClick={() => setChartType('bar')}
-                            aria-pressed={chartType === 'bar'}
+                {/* Date range filter */}
+                <Grid container spacing={2} sx={{ mb: 1.5 }}>
+                    <Grid size={{ xs: 6, md: 3 }}>
+                        <TextField
+                            type="date"
+                            label="Start date"
+                            value={start}
+                            onChange={(e) => setStart(e.target.value)}
+                            slotProps={{
+                                inputLabel: { shrink: true },
+                                htmlInput: { max: end || today }
+                            }}
+                        />
+                    </Grid>
+                    <Grid size={{ xs: 6, md: 3 }}>
+                        <TextField
+                            type="date"
+                            label="End date"
+                            value={end}
+                            onChange={(e) => setEnd(e.target.value)}
+                            slotProps={{
+                                inputLabel: { shrink: true },
+                                htmlInput: { min: start, max: today }
+                            }}
+                        />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 2 }}>
+                        <TextField
+                            select
+                            label="Group by"
+                            value={groupBy}
+                            onChange={(e) => setGroupBy(e.target.value)}
                         >
-                            Bar
-                        </button>
-                        <button
-                            type="button"
-                            style={styles.button(chartType === 'line')}
-                            onClick={() => setChartType('line')}
-                            aria-pressed={chartType === 'line'}
-                        >
-                            Line
-                        </button>
-                    </div>
-                </div>
-            </div>
+                            <MenuItem value="day">Day</MenuItem>
+                            <MenuItem value="month">Month</MenuItem>
+                        </TextField>
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 4 }} sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
+                            {PRESETS.map((preset) => {
+                                const range = preset.range()
+                                const active = range.start === start && range.end === end
+                                return (
+                                    <Chip
+                                        key={preset.label}
+                                        label={preset.label}
+                                        onClick={() => applyPreset(preset)}
+                                        color={active ? 'primary' : 'default'}
+                                        variant={active ? 'filled' : 'outlined'}
+                                        component="button"
+                                        type="button"
+                                    />
+                                )
+                            })}
+                        </Stack>
+                    </Grid>
+                </Grid>
 
-            <div style={styles.presets}>
-                {PRESETS.map((preset) => {
-                    const range = preset.range()
-                    const active = range.start === start && range.end === end
-                    return (
-                        <button
-                            key={preset.label}
-                            type="button"
-                            style={styles.button(active)}
-                            onClick={() => applyPreset(preset)}
-                        >
-                            {preset.label}
-                        </button>
-                    )
-                })}
-            </div>
+                {error ? (
+                    <Alert severity="error" role="alert">{error}</Alert>
+                ) : (
+                    <>
+                        <Grid container spacing={2} sx={{ mb: 2 }}>
+                            <Grid size={{ xs: 12, sm: 4 }}>
+                                <StatTile label="Total sales" value={formatPeso(totals.sales)} />
+                            </Grid>
+                            <Grid size={{ xs: 6, sm: 4 }}>
+                                <StatTile label="Orders" value={totals.orders} />
+                            </Grid>
+                            <Grid size={{ xs: 6, sm: 4 }}>
+                                <StatTile label="Items sold" value={totals.itemsSold} />
+                            </Grid>
+                        </Grid>
 
-            {error ? (
-                <p role="alert" style={{ color: 'red' }}>{error}</p>
-            ) : (
-                <>
-                    <div style={styles.stats}>
-                        <div style={styles.stat}>
-                            <p style={styles.statLabel}>Total sales</p>
-                            <p style={styles.statValue}>{formatPeso(totals.sales)}</p>
-                        </div>
-                        <div style={styles.stat}>
-                            <p style={styles.statLabel}>Orders</p>
-                            <p style={styles.statValue}>{totals.orders}</p>
-                        </div>
-                        <div style={styles.stat}>
-                            <p style={styles.statLabel}>Items sold</p>
-                            <p style={styles.statValue}>{totals.itemsSold}</p>
-                        </div>
-                    </div>
-
-                    {loading ? (
-                        <p>Loading sales...</p>
-                    ) : !hasSales ? (
-                        <p>No sales in this date range. Cancelled orders are not counted.</p>
-                    ) : (
-                        <div style={{ width: '100%', height: 340 }}>
-                            <ResponsiveContainer>
-                                {chartType === 'bar' ? (
-                                    <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-                                        {commonAxes}
-                                        <Bar dataKey="sales" name="Sales" fill="var(--accent)" radius={[4, 4, 0, 0]} />
-                                    </BarChart>
-                                ) : (
-                                    <LineChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-                                        {commonAxes}
-                                        <Line
-                                            type="monotone"
-                                            dataKey="sales"
-                                            name="Sales"
-                                            stroke="var(--accent)"
-                                            strokeWidth={2}
-                                            dot={data.length <= 31}
-                                        />
-                                    </LineChart>
-                                )}
-                            </ResponsiveContainer>
-                        </div>
-                    )}
-                </>
-            )}
-
-            <p style={{ fontSize: 13, marginBottom: 0 }}>
-                Sales exclude cancelled orders and are based on the date each order was placed.
-            </p>
-        </section>
+                        {loading ? (
+                            <Skeleton variant="rounded" height={340} />
+                        ) : !hasSales ? (
+                            <Box sx={{ py: 6, textAlign: 'center', color: 'text.secondary' }}>
+                                No sales in this date range.
+                            </Box>
+                        ) : (
+                            <Box sx={{ width: '100%', height: 340 }}>
+                                <ResponsiveContainer>
+                                    {chartType === 'bar' ? (
+                                        <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+                                            {commonAxes}
+                                            <Bar dataKey="sales" name="Sales" fill={CHART_COLOR} radius={[4, 4, 0, 0]} />
+                                        </BarChart>
+                                    ) : (
+                                        <LineChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+                                            {commonAxes}
+                                            <Line
+                                                type="monotone"
+                                                dataKey="sales"
+                                                name="Sales"
+                                                stroke={CHART_COLOR}
+                                                strokeWidth={2.5}
+                                                dot={data.length <= 31}
+                                            />
+                                        </LineChart>
+                                    )}
+                                </ResponsiveContainer>
+                            </Box>
+                        )}
+                    </>
+                )}
+            </CardContent>
+        </Card>
     )
 }
 

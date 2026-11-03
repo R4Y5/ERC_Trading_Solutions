@@ -1,4 +1,41 @@
+import { useState } from "react";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import IconButton from "@mui/material/IconButton";
+import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
+import Grid from "@mui/material/Grid";
+import Stack from "@mui/material/Stack";
+import Rating from "@mui/material/Rating";
+import Chip from "@mui/material/Chip";
+import Button from "@mui/material/Button";
+import Divider from "@mui/material/Divider";
+import Avatar from "@mui/material/Avatar";
+import Paper from "@mui/material/Paper";
+import Skeleton from "@mui/material/Skeleton";
+import CloseIcon from "@mui/icons-material/Close";
+import AddIcon from "@mui/icons-material/Add";
+import RemoveIcon from "@mui/icons-material/Remove";
+import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
+import ImageNotSupportedOutlinedIcon from "@mui/icons-material/ImageNotSupportedOutlined";
+import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
 import { getProductRating, getProductReviewCount } from "../../hooks/useShop";
+
+const peso = (value) =>
+  "₱" +
+  Number(value || 0).toLocaleString("en-PH", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+// Reviewer's display name (the User model keeps names under user.customer)
+const reviewerName = (review) => {
+  const person = review.customer || {};
+  const fname = person.customer?.fname || person.fname;
+  const lname = person.customer?.lname || person.lname;
+  return [fname, lname].filter(Boolean).join(" ") || person.username || "Customer";
+};
 
 function ProductDetails({
   item,
@@ -9,295 +46,303 @@ function ProductDetails({
   onAddToCart,
   adding,
 }) {
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+
   if (!item) return null;
 
   const activeImages = (item.images || []).filter(
     (image) => !image.deleted_at && image.image_path,
   );
-
   const reviews = (item.reviews || []).filter((review) => !review.deleted_at);
-
   const stock = Number(item.stock?.quantity) || 0;
   const rating = getProductRating(item);
   const reviewCount = getProductReviewCount(item);
+  const mainImage = activeImages[Math.min(activeImageIndex, activeImages.length - 1)];
+
+  const changeQuantity = (value) => {
+    const next = Number(value);
+    setQuantity(
+      Number.isFinite(next) && next >= 1 ? Math.min(Math.floor(next), Math.max(stock, 1)) : 1,
+    );
+  };
 
   return (
-    <div
-      onClick={onClose}
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 1000,
-        backgroundColor: "rgba(0,0,0,0.55)",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        padding: 16,
-        overflowY: "auto",
-      }}
+    <Dialog
+      open
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      scroll="paper"
+      aria-labelledby="product-details-title"
     >
-      <section
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="product-details-title"
-        onClick={(event) => event.stopPropagation()}
-        style={{
-          backgroundColor: "#fff",
-          borderRadius: 14,
-          width: "100%",
-          maxWidth: 850,
-          maxHeight: "90vh",
-          overflowY: "auto",
-          padding: 24,
-          boxSizing: "border-box",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: 12,
-          }}
+      <DialogTitle id="product-details-title" sx={{ pr: 7 }}>
+        Product Details
+        <IconButton
+          onClick={onClose}
+          aria-label="Close product details"
+          sx={{ position: "absolute", right: 12, top: 12 }}
         >
-          <h2 id="product-details-title">Product Details</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close product details"
-          >
-            ✕
-          </button>
-        </div>
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
 
-        {loading ? (
-          <p>Loading product details...</p>
-        ) : (
-          <>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns:
-                  "repeat(auto-fit, minmax(min(100%, 260px), 1fr))",
-                gap: 24,
-              }}
-            >
-              <div>
-                {activeImages.length > 0 ? (
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns:
-                        "repeat(auto-fit, minmax(100px, 1fr))",
-                      gap: 10,
-                    }}
-                  >
+      <DialogContent dividers>
+        <Grid container spacing={3}>
+          {/* Images */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            {loading && activeImages.length === 0 ? (
+              <Skeleton variant="rounded" height={320} />
+            ) : mainImage ? (
+              <>
+                <Box
+                  component="img"
+                  src={mainImage.image_path}
+                  alt={`${item.item_name} image ${activeImageIndex + 1}`}
+                  sx={{
+                    width: "100%",
+                    height: { xs: 260, sm: 340 },
+                    objectFit: "cover",
+                    borderRadius: 2,
+                    bgcolor: "grey.100",
+                    display: "block",
+                  }}
+                />
+                {activeImages.length > 1 && (
+                  <Stack direction="row" spacing={1} sx={{ mt: 1, overflowX: "auto", pb: 0.5 }}>
                     {activeImages.map((image, index) => (
-                      <img
+                      <Box
                         key={image._id || image.image_path}
-                        src={image.image_path}
-                        alt={`${item.item_name} image ${index + 1}`}
-                        style={{
-                          width: "100%",
-                          height: 150,
-                          objectFit: "cover",
-                          borderRadius: 8,
+                        component="button"
+                        type="button"
+                        onClick={() => setActiveImageIndex(index)}
+                        aria-label={`Show image ${index + 1}`}
+                        sx={{
+                          p: 0,
+                          border: 2,
+                          borderColor: index === activeImageIndex ? "primary.main" : "transparent",
+                          borderRadius: 1.5,
+                          overflow: "hidden",
+                          cursor: "pointer",
+                          flexShrink: 0,
+                          bgcolor: "transparent",
                         }}
-                      />
+                      >
+                        <Box
+                          component="img"
+                          src={image.image_path}
+                          alt=""
+                          sx={{ width: 64, height: 64, objectFit: "cover", display: "block" }}
+                        />
+                      </Box>
                     ))}
-                  </div>
-                ) : (
-                  <p>No product images available.</p>
+                  </Stack>
                 )}
-              </div>
+              </>
+            ) : (
+              <Box
+                sx={{
+                  height: 300,
+                  borderRadius: 2,
+                  bgcolor: "grey.100",
+                  color: "grey.500",
+                  display: "grid",
+                  placeItems: "center",
+                }}
+              >
+                <Stack sx={{ alignItems: "center" }}>
+                  <ImageNotSupportedOutlinedIcon fontSize="large" />
+                  <Typography>No product images available.</Typography>
+                </Stack>
+              </Box>
+            )}
+          </Grid>
 
-              <div>
-                <p style={{ color: "#6b7280" }}>{item.category}</p>
-                <h3>{item.item_name}</h3>
+          {/* Info and add to cart */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Chip label={item.category} size="small" variant="outlined" sx={{ mb: 1 }} />
+            <Typography variant="h2" sx={{ mb: 1 }}>
+              {item.item_name}
+            </Typography>
 
-                <p style={{ fontSize: 24, fontWeight: 700, color: "#166534" }}>
-                  ₱
-                  {Number(item.sell_price || 0).toLocaleString("en-PH", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </p>
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 1.5 }}>
+              <Rating value={rating} precision={0.5} readOnly />
+              <Typography color="text.secondary">
+                {reviewCount > 0
+                  ? `${rating.toFixed(1)} · ${reviewCount} ${reviewCount === 1 ? "review" : "reviews"}`
+                  : "No reviews yet"}
+              </Typography>
+            </Stack>
 
-                <p>
-                  {rating > 0 ? `★ ${rating.toFixed(1)} / 5` : "No rating yet"}
-                  {" · "}
-                  {reviewCount} {reviewCount === 1 ? "review" : "reviews"}
-                </p>
+            <Typography sx={{ fontSize: 28, fontWeight: 800, color: "primary.main", mb: 1 }}>
+              {peso(item.sell_price)}
+            </Typography>
 
-                <p>
-                  <strong>Stock:</strong>{" "}
-                  {stock > 0 ? `${stock} available` : "Out of stock"}
-                </p>
+            <Chip
+              icon={<StorefrontOutlinedIcon />}
+              label={stock > 0 ? `${stock} available` : "Out of stock"}
+              color={stock === 0 ? "error" : stock < 10 ? "warning" : "success"}
+              variant="outlined"
+              size="small"
+              sx={{ mb: 2 }}
+            />
 
-                <p>
-                  <strong>Description</strong>
-                </p>
-                <p style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
-                  {item.description || "No description provided."}
-                </p>
+            <Typography sx={{ fontWeight: 600, mb: 0.5 }}>Description</Typography>
+            <Typography
+              color="text.secondary"
+              sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", mb: 3 }}
+            >
+              {item.description || "No description provided."}
+            </Typography>
 
-                <label
-                  htmlFor="product-quantity"
-                  style={{ display: "block", marginBottom: 8 }}
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ alignItems: { sm: "center" } }}>
+              <Stack
+                direction="row"
+                sx={{
+                  alignItems: "center",
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 2,
+                  alignSelf: "flex-start",
+                }}
+              >
+                <IconButton
+                  onClick={() => changeQuantity(quantity - 1)}
+                  disabled={stock <= 0 || quantity <= 1}
+                  aria-label="Decrease quantity"
                 >
-                  Quantity
-                </label>
-
-                <input
+                  <RemoveIcon />
+                </IconButton>
+                <Box
+                  component="input"
                   id="product-quantity"
                   type="number"
-                  min="1"
+                  aria-label="Quantity"
+                  min={1}
                   max={stock}
                   value={quantity}
                   disabled={stock <= 0}
-                  onChange={(event) => {
-                    const value = Number(event.target.value);
-                    setQuantity(
-                      Number.isFinite(value) && value >= 1
-                        ? Math.min(Math.floor(value), stock)
-                        : 1,
-                    );
-                  }}
-                  style={{
-                    width: 100,
-                    padding: 10,
-                    boxSizing: "border-box",
-                    marginRight: 10,
+                  onChange={(event) => changeQuantity(event.target.value)}
+                  sx={{
+                    width: 56,
+                    textAlign: "center",
+                    border: 0,
+                    font: "inherit",
+                    fontWeight: 700,
+                    bgcolor: "transparent",
+                    "&:focus": { outline: "none" },
+                    MozAppearance: "textfield",
+                    "&::-webkit-inner-spin-button, &::-webkit-outer-spin-button": {
+                      WebkitAppearance: "none",
+                      margin: 0,
+                    },
                   }}
                 />
-
-                <button
-                  type="button"
-                  disabled={stock <= 0 || adding || quantity < 1}
-                  onClick={() => onAddToCart(item, quantity)}
-                  style={{
-                    padding: 12,
-                    backgroundColor: stock > 0 ? "#166534" : "#9ca3af",
-                    color: "#fff",
-                    border: 0,
-                    borderRadius: 8,
-                    cursor: stock > 0 ? "pointer" : "not-allowed",
-                  }}
+                <IconButton
+                  onClick={() => changeQuantity(quantity + 1)}
+                  disabled={stock <= 0 || quantity >= stock}
+                  aria-label="Increase quantity"
                 >
-                  {adding ? "Adding..." : "Add to Cart"}
-                </button>
-              </div>
-            </div>
+                  <AddIcon />
+                </IconButton>
+              </Stack>
 
-            <hr style={{ margin: "28px 0" }} />
+              <Button
+                variant="contained"
+                size="large"
+                startIcon={<AddShoppingCartIcon />}
+                disabled={stock <= 0 || adding || quantity < 1}
+                onClick={() => onAddToCart(item, quantity)}
+                sx={{ flexGrow: 1 }}
+              >
+                {adding ? "Adding..." : stock > 0 ? "Add to Cart" : "Out of Stock"}
+              </Button>
+            </Stack>
+          </Grid>
+        </Grid>
 
-            <section>
-              <h3>Customer Reviews ({reviewCount})</h3>
+        <Divider sx={{ my: 3 }} />
 
-              {reviews.length === 0 ? (
-                <p>No reviews yet. Be the first to review this product!</p>
-              ) : (
-                <div style={{ display: "grid", gap: 16 }}>
-                  {reviews.map((review) => (
-                    <article
-                      key={review._id}
-                      style={{
-                        padding: 14,
-                        border: "1px solid #e5e7eb",
-                        borderRadius: 8,
+        {/* Reviews */}
+        <Typography variant="h3" sx={{ mb: 2 }}>
+          Customer Reviews ({reviewCount})
+        </Typography>
+
+        {reviews.length === 0 ? (
+          <Typography color="text.secondary">
+            No reviews yet. Be the first to review this product!
+          </Typography>
+        ) : (
+          <Stack spacing={2}>
+            {reviews.map((review) => {
+              const name = reviewerName(review);
+              const images = (review.images || []).filter(
+                (image) => !image.deleted_at && image.image_path,
+              );
+
+              return (
+                <Paper key={review._id} variant="outlined" sx={{ p: 2 }}>
+                  <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 1 }}>
+                    <Avatar sx={{ width: 34, height: 34, bgcolor: "primary.main", fontSize: 15 }}>
+                      {name.charAt(0).toUpperCase()}
+                    </Avatar>
+                    <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                      <Typography sx={{ fontWeight: 600 }} noWrap>{name}</Typography>
+                      {review.created_at && (
+                        <Typography variant="caption" color="text.secondary">
+                          {new Date(review.created_at).toLocaleDateString("en-PH", {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </Typography>
+                      )}
+                    </Box>
+                    <Rating value={Number(review.rating) || 0} readOnly size="small" />
+                  </Stack>
+
+                  <Typography sx={{ whiteSpace: "pre-wrap" }}>{review.review_text}</Typography>
+
+                  {images.length > 0 && (
+                    <Stack direction="row" spacing={1} sx={{ mt: 1.5, flexWrap: "wrap", gap: 1 }}>
+                      {images.map((image, index) => (
+                        <Box
+                          key={image._id || image.image_path}
+                          component="img"
+                          src={image.image_path}
+                          alt={`Review image ${index + 1}`}
+                          loading="lazy"
+                          sx={{ width: 80, height: 80, objectFit: "cover", borderRadius: 1.5 }}
+                        />
+                      ))}
+                    </Stack>
+                  )}
+
+                  {review.admin_reply?.trim() && (
+                    <Box
+                      sx={{
+                        mt: 1.5,
+                        p: 1.5,
+                        bgcolor: "grey.50",
+                        borderLeft: 3,
+                        borderColor: "primary.main",
+                        borderRadius: 1,
                       }}
                     >
-                      <p style={{ marginTop: 0 }}>
-                        <strong>
-                          {review.customer?.fname
-                            ? `${review.customer.fname} ${review.customer.lname || ""}`
-                            : "Customer"}
-                        </strong>
-                        {" · "}
-                        {"★".repeat(
-                          Math.max(0, Math.min(5, Number(review.rating) || 0)),
-                        )}
-                        {"☆".repeat(
-                          5 -
-                            Math.max(
-                              0,
-                              Math.min(5, Number(review.rating) || 0),
-                            ),
-                        )}
-                      </p>
-
-                      <p style={{ whiteSpace: "pre-wrap" }}>
-                        {review.review_text}
-                      </p>
-
-                      {review.admin_reply?.trim() && (
-                        <div
-                          style={{
-                            marginTop: 12,
-                            marginBottom: 12,
-                            marginLeft: 12,
-                            padding: 12,
-                            backgroundColor: "#f0fdf4",
-                            borderLeft: "4px solid #166534",
-                            borderRadius: 6,
-                          }}
-                        >
-                          <p
-                            style={{
-                              margin: "0 0 6px",
-                              fontWeight: 700,
-                              color: "#166534",
-                            }}
-                          >
-                            Admin Reply
-                          </p>
-
-                          <p
-                            style={{
-                              margin: 0,
-                              whiteSpace: "pre-wrap",
-                              overflowWrap: "anywhere",
-                            }}
-                          >
-                            {review.admin_reply}
-                          </p>
-                        </div>
-                      )}
-
-                      {review.images
-                        ?.filter(
-                          (image) => !image.deleted_at && image.image_path,
-                        )
-                        .map((image, index) => (
-                          <img
-                            key={image._id || image.image_path}
-                            src={image.image_path}
-                            alt={`Review image ${index + 1}`}
-                            loading="lazy"
-                            style={{
-                              width: 90,
-                              height: 90,
-                              objectFit: "cover",
-                              borderRadius: 6,
-                              marginRight: 8,
-                            }}
-                          />
-                        ))}
-
-                      {review.created_at && (
-                        <small style={{ color: "#6b7280" }}>
-                          {new Date(review.created_at).toLocaleDateString()}
-                        </small>
-                      )}
-                    </article>
-                  ))}
-                </div>
-              )}
-            </section>
-          </>
+                      <Typography variant="caption" sx={{ fontWeight: 700, color: "primary.main" }}>
+                        ERC Trading replied
+                      </Typography>
+                      <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>
+                        {review.admin_reply}
+                      </Typography>
+                    </Box>
+                  )}
+                </Paper>
+              );
+            })}
+          </Stack>
         )}
-      </section>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

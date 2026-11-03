@@ -1,4 +1,9 @@
-import { Link } from 'react-router-dom'
+import { Link as RouterLink } from 'react-router-dom'
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
+import Button from '@mui/material/Button'
+import Skeleton from '@mui/material/Skeleton'
+import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
 import OrderCard from './OrderCard'
 
 function MyOrdersList({
@@ -8,42 +13,34 @@ function MyOrdersList({
     onCancel
 }) {
     if (loading) {
-        return <p className="py-8 text-center">Loading your orders...</p>
+        return [0, 1].map((key) => (
+            <Skeleton key={key} variant="rounded" height={260} sx={{ mb: 2 }} />
+        ))
     }
 
     if (orders.length === 0) {
         return (
-            <div className="rounded-lg border border-gray-200 p-8 text-center">
-                <h2 className="text-lg font-semibold">
-                    No orders yet
-                </h2>
-
-                <p className="mt-2 text-gray-600">
+            <Box sx={{ textAlign: 'center', py: 8, color: 'text.secondary' }}>
+                <ReceiptLongOutlinedIcon sx={{ fontSize: 48, color: 'grey.400' }} />
+                <Typography variant="h3">No orders yet</Typography>
+                <Typography sx={{ mb: 2 }}>
                     Your orders will appear here after checkout.
-                </p>
-
-                <Link
-                    to="/"
-                    className="mt-4 inline-block rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-                >
+                </Typography>
+                <Button component={RouterLink} to="/shop" variant="contained">
                     Continue shopping
-                </Link>
-            </div>
+                </Button>
+            </Box>
         )
     }
 
-    return (
-        <div className="space-y-5">
-            {orders.map((order) => (
-                <OrderCard
-                    key={order._id}
-                    order={order}
-                    onCancel={onCancel}
-                    cancelling={cancellingId === order._id}
-                />
-            ))}
-        </div>
-    )
+    return orders.map((order) => (
+        <OrderCard
+            key={order._id}
+            order={order}
+            onCancel={onCancel}
+            cancelling={cancellingId === order._id}
+        />
+    ))
 }
 
 export default MyOrdersList
