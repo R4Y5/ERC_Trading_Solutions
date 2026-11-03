@@ -67,6 +67,7 @@ function useItems() {
 
   // Load active products when the hook is first used.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- load products on page open
     getActiveProducts();
   }, []);
 

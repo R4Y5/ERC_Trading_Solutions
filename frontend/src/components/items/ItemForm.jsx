@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Formik, Form, Field } from "formik";
 import * as Yup from "yup";
 
@@ -76,23 +76,26 @@ function ItemForm({
   imagesToRemove,
   onToggleExistingImageRemoval,
 }) {
-  const [previewImages, setPreviewImages] = useState([]);
   const [imageError, setImageError] = useState("");
 
+  // Preview URLs for newly selected images
+  const previewImages = useMemo(
+    () =>
+      selectedFiles.map((file) => ({
+        file,
+        url: URL.createObjectURL(file),
+      })),
+    [selectedFiles]
+  );
+
+  // Free the preview URLs when the selection changes or the form closes
   useEffect(() => {
-    const previews = selectedFiles.map((file) => ({
-      file,
-      url: URL.createObjectURL(file),
-    }));
-
-    setPreviewImages(previews);
-
     return () => {
-      previews.forEach((preview) =>
+      previewImages.forEach((preview) =>
         URL.revokeObjectURL(preview.url)
       );
     };
-  }, [selectedFiles]);
+  }, [previewImages]);
 
   const initialValues = {
     item_name: formData?.item_name ?? "",
@@ -300,7 +303,7 @@ function ItemForm({
 
             <hr />
 
-            <div>
+            <div className="form-grid-full">
               <label htmlFor="item-images">Product Images</label>
               <p>
                 Select image files up to 5 MB each. You can select

@@ -1,7 +1,14 @@
-
 import { useState } from 'react'
 import * as yup from 'yup'
+import Box from '@mui/material/Box'
+import Stack from '@mui/material/Stack'
+import Rating from '@mui/material/Rating'
+import Typography from '@mui/material/Typography'
+import TextField from '@mui/material/TextField'
+import Button from '@mui/material/Button'
+import SendOutlinedIcon from '@mui/icons-material/SendOutlined'
 
+// Validation (unchanged)
 const reviewSchema = yup.object({
     rating: yup
         .number()
@@ -21,6 +28,14 @@ const reviewSchema = yup.object({
         .max(1000, 'Review must not exceed 1000 characters')
 })
 
+const RATING_LABELS = {
+    1: 'Very Poor',
+    2: 'Poor',
+    3: 'Average',
+    4: 'Good',
+    5: 'Excellent'
+}
+
 function ReviewForm({
     initialValues = { rating: '', review_text: '' },
     submitLabel = 'Submit Review',
@@ -30,6 +45,7 @@ function ReviewForm({
     const [rating, setRating] = useState(
         initialValues.rating ?? ''
     )
+    const [hoverRating, setHoverRating] = useState(-1)
     const [reviewText, setReviewText] = useState(
         initialValues.review_text ?? ''
     )
@@ -76,86 +92,73 @@ function ReviewForm({
         }
     }
 
+    const shownRating = hoverRating !== -1 ? hoverRating : Number(rating) || 0
+
     return (
-        <form onSubmit={handleSubmit} noValidate>
-            <div>
-                <label htmlFor="review-rating">
-                    Rating:
-                </label>
+        <Box component="form" onSubmit={handleSubmit} noValidate>
+            <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+                Your rating
+            </Typography>
 
-                <select
-                    id="review-rating"
-                    value={rating}
-                    onChange={(event) => {
-                        setRating(event.target.value)
-                        setErrors((previous) => ({
-                            ...previous,
-                            rating: ''
-                        }))
-                    }}
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', mb: 0.5 }}>
+                <Rating
+                    name="review-rating"
+                    value={Number(rating) || null}
+                    size="large"
                     disabled={submitting}
-                    required
-                >
-                    <option value="">Select a rating</option>
-                    <option value="1">1 - Very Poor</option>
-                    <option value="2">2 - Poor</option>
-                    <option value="3">3 - Average</option>
-                    <option value="4">4 - Good</option>
-                    <option value="5">5 - Excellent</option>
-                </select>
-
-                {errors.rating && (
-                    <p role="alert" style={{ color: 'red' }}>
-                        {errors.rating}
-                    </p>
-                )}
-            </div>
-
-            <div>
-                <label htmlFor="review-text">
-                    Your review:
-                </label>
-
-                <textarea
-                    id="review-text"
-                    value={reviewText}
-                    onChange={(event) => {
-                        setReviewText(event.target.value)
-                        setErrors((previous) => ({
-                            ...previous,
-                            review_text: ''
-                        }))
+                    onChange={(_, value) => {
+                        setRating(value ?? '')
+                        setErrors((previous) => ({ ...previous, rating: '' }))
                     }}
-                    rows={4}
-                    maxLength={1000}
-                    placeholder="Write your review here..."
-                    disabled={submitting}
-                    required
+                    onChangeActive={(_, value) => setHoverRating(value)}
+                    aria-label="Rating"
                 />
+                <Typography color="text.secondary" sx={{ minWidth: 90 }}>
+                    {shownRating ? RATING_LABELS[shownRating] : 'Tap a star'}
+                </Typography>
+            </Stack>
 
-                <p>{reviewText.length}/1000 characters</p>
+            {errors.rating && (
+                <Typography variant="caption" color="error" role="alert" sx={{ display: 'block', mb: 1 }}>
+                    {errors.rating}
+                </Typography>
+            )}
 
-                {errors.review_text && (
-                    <p role="alert" style={{ color: 'red' }}>
-                        {errors.review_text}
-                    </p>
-                )}
-            </div>
+            <TextField
+                id="review-text"
+                label="Your review"
+                placeholder="What did you like or dislike? How was the quality?"
+                multiline
+                minRows={3}
+                value={reviewText}
+                onChange={(event) => {
+                    setReviewText(event.target.value)
+                    setErrors((previous) => ({ ...previous, review_text: '' }))
+                }}
+                disabled={submitting}
+                error={Boolean(errors.review_text)}
+                helperText={errors.review_text || `${reviewText.length}/1000 characters`}
+                slotProps={{ htmlInput: { maxLength: 1000 } }}
+                sx={{ mt: 1.5 }}
+            />
 
-            <button type="submit" disabled={submitting}>
-                {submitting ? 'Saving...' : submitLabel}
-            </button>
-
-            {onCancel && (
-                <button
-                    type="button"
-                    onClick={onCancel}
+            <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
+                <Button
+                    type="submit"
+                    variant="contained"
+                    startIcon={<SendOutlinedIcon />}
                     disabled={submitting}
                 >
-                    Cancel
-                </button>
-            )}
-        </form>
+                    {submitting ? 'Saving...' : submitLabel}
+                </Button>
+
+                {onCancel && (
+                    <Button onClick={onCancel} disabled={submitting}>
+                        Cancel
+                    </Button>
+                )}
+            </Stack>
+        </Box>
     )
 }
 
