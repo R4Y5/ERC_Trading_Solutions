@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const crypto = require('crypto')
 const validator = require('validator')
-
+const { sendWelcomeEmail } = require('../utils/mailer')
 
 // Register user
 
@@ -393,6 +393,13 @@ const completeRegistration = async (req, res) => {
         await TemporaryRegistration.deleteOne({
             _id: temporaryRegistration._id
         })
+
+         // Send welcome email (a mail failure must not break registration)
+        try {
+            await sendWelcomeEmail(user)
+        } catch (mailError) {
+            console.error('Welcome email failed:', mailError.message)
+        }
 
         return res.status(201).json({
             message: 'Registration successful! Please log in.',

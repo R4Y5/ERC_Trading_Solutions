@@ -1,8 +1,8 @@
-
 const mongoose = require('mongoose')
 const Order = require('../models/orderModel')
 const Cart = require('../models/cartModel')
 const Item = require('../models/itemModel')
+const { sendOrderEmail } = require('../utils/mailer')
 
 // Create an order from selected cart items or the entire cart
 const createOrder = async (req, res) => {
@@ -174,6 +174,16 @@ const createOrder = async (req, res) => {
         const populatedOrder = await Order.findById(createdOrder._id)
             .populate('customer')
             .populate('order_lines.item')
+
+        try {
+            await sendOrderEmail(
+                populatedOrder,
+                'Your order has been placed',
+                'Thank you! We have received your order and it is now pending.'
+            )
+        } catch (mailError) {
+            console.error('Order placed email failed:', mailError.message)
+        }
 
         return res.status(201).json({
             message: 'Order created successfully',
@@ -370,6 +380,16 @@ const updateOrderStatus = async (req, res) => {
             .populate('customer')
             .populate('order_lines.item')
 
+        try {
+            await sendOrderEmail(
+                updatedOrder,
+                `Your order status is now ${updatedOrder.status}`,
+                `The status of your order has been updated to ${updatedOrder.status}.`
+            )
+        } catch (mailError) {
+            console.error('Order status email failed:', mailError.message)
+        }
+
         return res.status(200).json({
             message: 'Order status updated successfully',
             order: updatedOrder
@@ -458,6 +478,16 @@ const cancelOrder = async (req, res) => {
         const populatedOrder = await Order.findById(cancelledOrder._id)
             .populate('customer')
             .populate('order_lines.item')
+
+        try {
+            await sendOrderEmail(
+                populatedOrder,
+                'Your order has been cancelled',
+                'Your order has been cancelled.'
+            )
+        } catch (mailError) {
+            console.error('Order cancelled email failed:', mailError.message)
+        }
 
         return res.status(200).json({
             message: 'Order cancelled successfully',

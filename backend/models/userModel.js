@@ -28,6 +28,19 @@ const userSchema = new mongoose.Schema({
         required: [true, 'Please enter user password']
     },
 
+    // 'local' = email + password, 'google' = signed up with Google
+    auth_provider: {
+        type: String,
+        enum: ['local', 'google'],
+        default: 'local'
+    },
+    // Firebase user ID, set once the account has signed in with Google.
+    // No default on purpose: sparse unique index skips missing values.
+    google_uid: {
+        type: String,
+        unique: true,
+        sparse: true
+    },
     remember_token: {
         type: String,
         default: null

@@ -10,13 +10,15 @@ const {
     cancelOrder
 } = require('../controllers/orderController')
 
-const { protect } = require('../middleware/authMiddleware')
+const { getSalesReport } = require('../controllers/salesController')
+const { protect, admin } = require('../middleware/authMiddleware')
 
 const router = express.Router()
 
 // Admin routes
-router.get('/admin/all', protect, getAllOrders)
-router.put('/admin/:id', protect, updateOrderStatus)
+router.get('/admin/all', protect, admin, getAllOrders)
+router.get('/admin/sales', protect, admin, getSalesReport)
+router.put('/admin/:id', protect, admin, updateOrderStatus)
 
 // Customer routes
 router.post('/', protect, createOrder)
