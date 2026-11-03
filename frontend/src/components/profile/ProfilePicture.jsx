@@ -1,17 +1,22 @@
-
 import { useEffect, useState } from "react";
+import Box from "@mui/material/Box";
+import Avatar from "@mui/material/Avatar";
+import IconButton from "@mui/material/IconButton";
+import Button from "@mui/material/Button";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
+import Tooltip from "@mui/material/Tooltip";
+import CircularProgress from "@mui/material/CircularProgress";
+import PhotoCameraOutlinedIcon from "@mui/icons-material/PhotoCameraOutlined";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/jpeg", "image/png"];
 
-function getImageUrl(image) {
-  if (typeof image === "string" && /^https?:\/\//i.test(image)) {
-    return image;
-  }
+const isHttpUrl = (value) =>
+  typeof value === "string" && /^https?:\/\//i.test(value);
 
-  return "/default-profile.png";
-}
-
+// Large avatar with a camera button to choose a new picture,
+// then Upload / Cancel to confirm.
 export default function ProfilePicture({
   user,
   uploading,
@@ -21,20 +26,23 @@ export default function ProfilePicture({
 }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
-  const [imageError, setImageError] = useState(false);
   const [localError, setLocalError] = useState("");
 
+  // Show a preview of the chosen file (and free the old preview)
+  const choosePreviewFile = (file) => {
+    setPreviewUrl((previous) => {
+      if (previous) URL.revokeObjectURL(previous);
+      return file ? URL.createObjectURL(file) : "";
+    });
+    setSelectedFile(file);
+  };
+
+  // Free the preview when it changes or the page is left
   useEffect(() => {
-    if (!selectedFile) {
-      setPreviewUrl("");
-      return undefined;
-    }
-
-    const objectUrl = URL.createObjectURL(selectedFile);
-    setPreviewUrl(objectUrl);
-
-    return () => URL.revokeObjectURL(objectUrl);
-  }, [selectedFile]);
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
   const handleSelect = (event) => {
     const file = event.target.files?.[0];
@@ -58,8 +66,7 @@ export default function ProfilePicture({
       return;
     }
 
-    setImageError(false);
-    setSelectedFile(file);
+    choosePreviewFile(file);
   };
 
   const handleUpload = async () => {
@@ -68,163 +75,110 @@ export default function ProfilePicture({
     const success = await onUpload(selectedFile);
 
     if (success) {
-      setSelectedFile(null);
-      setImageError(false);
+      choosePreviewFile(null);
     }
   };
 
   const handleCancel = () => {
     if (uploading) return;
-
-    setSelectedFile(null);
+    choosePreviewFile(null);
     setLocalError("");
     onMessage("");
     onError("");
   };
 
-  const imageSrc = previewUrl || getImageUrl(user?.profile_image);
-  const fullName = [
-    user?.customer?.fname,
-    user?.customer?.lname,
-  ]
-    .filter(Boolean)
-    .join(" ") || "Customer";
+  const fullName =
+    [user?.customer?.fname, user?.customer?.lname].filter(Boolean).join(" ") ||
+    user?.username ||
+    "Customer";
+
+  const imageSrc =
+    previewUrl || (isHttpUrl(user?.profile_image) ? user.profile_image : undefined);
 
   return (
-    <section style={styles.section}>
-      <img
-        key={imageSrc}
-        src={imageError && !previewUrl ? "/default-profile.png" : imageSrc}
-        alt="Customer profile"
-        style={styles.picture}
-        onError={() => {
-          if (previewUrl) {
-            setLocalError("Unable to preview this image.");
-          } else {
-            setImageError(true);
-          }
-        }}
-      />
+    <Stack sx={{ alignItems: "center" }}>
+      <Box sx={{ position: "relative", mb: 1 }}>
+        <Avatar
+          src={imageSrc}
+          alt={fullName}
+          sx={{
+            width: 120,
+            height: 120,
+            fontSize: 44,
+            fontWeight: 700,
+            bgcolor: "secondary.main",
+            color: "primary.dark",
+            border: "4px solid #fff",
+            boxShadow: "0 4px 14px rgba(16,24,40,0.15)",
+          }}
+        >
+          {fullName.charAt(0).toUpperCase()}
+        </Avatar>
 
-      <h3 style={styles.name}>{fullName}</h3>
-      <p style={styles.caption}>Profile Picture</p>
+        {uploading && (
+          <Box
+            sx={{
+              position: "absolute",
+              inset: 0,
+              borderRadius: "50%",
+              bgcolor: "rgba(255,255,255,0.6)",
+              display: "grid",
+              placeItems: "center",
+            }}
+          >
+            <CircularProgress size={32} />
+          </Box>
+        )}
 
-      <label style={styles.fileLabel}>
-        {selectedFile ? "Choose Another Picture" : "Change Profile Picture"}
-        <input
-          type="file"
-          accept="image/jpeg,image/png,.jpg,.jpeg,.png"
-          onChange={handleSelect}
-          disabled={uploading}
-          style={styles.fileInput}
-        />
-      </label>
+        <Tooltip title="Change profile picture">
+          <IconButton
+            component="label"
+            aria-label="Change profile picture"
+            disabled={uploading}
+            sx={{
+              position: "absolute",
+              right: 0,
+              bottom: 4,
+              bgcolor: "primary.main",
+              color: "#fff",
+              border: "3px solid #fff",
+              "&:hover": { bgcolor: "primary.dark" },
+            }}
+            size="small"
+          >
+            <PhotoCameraOutlinedIcon fontSize="small" />
+            <input
+              hidden
+              type="file"
+              accept="image/jpeg,image/png,.jpg,.jpeg,.png"
+              onChange={handleSelect}
+            />
+          </IconButton>
+        </Tooltip>
+      </Box>
 
       {selectedFile && (
-        <div style={styles.actions}>
-          <button
-            type="button"
-            style={{
-              ...styles.button,
-              ...(uploading ? styles.disabled : {}),
-            }}
-            onClick={handleUpload}
-            disabled={uploading}
-          >
-            {uploading ? "Uploading..." : "Upload Picture"}
-          </button>
-
-          <button
-            type="button"
-            style={styles.cancelButton}
-            onClick={handleCancel}
-            disabled={uploading}
-          >
+        <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+          <Button size="small" variant="contained" onClick={handleUpload} disabled={uploading}>
+            {uploading ? "Uploading..." : "Save Photo"}
+          </Button>
+          <Button size="small" onClick={handleCancel} disabled={uploading}>
             Cancel
-          </button>
-        </div>
+          </Button>
+        </Stack>
       )}
 
-      <p style={styles.hint}>
-        JPG, JPEG, or PNG. Maximum file size: 5 MB.
-      </p>
+      {selectedFile && !uploading && (
+        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+          Preview — click Save Photo to keep it.
+        </Typography>
+      )}
 
-      {localError && <p style={styles.error}>{localError}</p>}
-    </section>
+      {localError && (
+        <Typography variant="caption" color="error" role="alert" sx={{ mt: 0.5, textAlign: "center" }}>
+          {localError}
+        </Typography>
+      )}
+    </Stack>
   );
 }
-
-const styles = {
-  section: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: "10px",
-    margin: "28px 0",
-    textAlign: "center",
-  },
-  picture: {
-    width: "120px",
-    height: "120px",
-    borderRadius: "50%",
-    objectFit: "cover",
-    border: "3px solid #e5e7eb",
-    backgroundColor: "#f3f4f6",
-  },
-  name: {
-    margin: "8px 0 0",
-  },
-  caption: {
-    color: "#6b7280",
-    margin: 0,
-    fontSize: "14px",
-  },
-  fileLabel: {
-    display: "inline-block",
-    padding: "10px 18px",
-    backgroundColor: "#1d4ed8",
-    color: "#fff",
-    borderRadius: "5px",
-    cursor: "pointer",
-    fontSize: "14px",
-  },
-  fileInput: {
-    display: "none",
-  },
-  actions: {
-    display: "flex",
-    flexWrap: "wrap",
-    justifyContent: "center",
-    gap: "10px",
-  },
-  button: {
-    padding: "10px 18px",
-    backgroundColor: "#1d4ed8",
-    color: "#fff",
-    border: "none",
-    borderRadius: "5px",
-    cursor: "pointer",
-  },
-  disabled: {
-    opacity: 0.6,
-    cursor: "not-allowed",
-  },
-  cancelButton: {
-    padding: "10px 18px",
-    backgroundColor: "#e5e7eb",
-    color: "#111827",
-    border: "none",
-    borderRadius: "5px",
-    cursor: "pointer",
-  },
-  hint: {
-    color: "#6b7280",
-    fontSize: "12px",
-    margin: 0,
-  },
-  error: {
-    color: "#b91c1c",
-    fontSize: "13px",
-    margin: 0,
-  },
-};

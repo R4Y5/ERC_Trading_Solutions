@@ -1,7 +1,15 @@
-
-import { Formik, Form, Field, ErrorMessage } from "formik";
+import { Formik, Form, Field } from "formik";
 import * as Yup from "yup";
+import Grid from "@mui/material/Grid";
+import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
+import Button from "@mui/material/Button";
+import Stack from "@mui/material/Stack";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 
+// Validation (unchanged)
 const profileSchema = Yup.object({
   title: Yup.string()
     .oneOf(["", "Mr.", "Ms.", "Mrs.", "Dr."], "Please select a valid title."),
@@ -68,6 +76,31 @@ date_of_birth: Yup.string().test(
     .max(200, "City or town cannot exceed 200 characters."),
 });
 
+const TITLES = ["Mr.", "Ms.", "Mrs.", "Dr."];
+const GENDERS = ["Male", "Female", "Other", "Prefer not to say"];
+
+// Read-only view of one detail
+function Detail({ label, value }) {
+  return (
+    <Box>
+      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>
+        {label}
+      </Typography>
+      <Typography sx={{ fontWeight: 500, color: value ? "text.primary" : "text.disabled", overflowWrap: "anywhere" }}>
+        {value || "Not set"}
+      </Typography>
+    </Box>
+  );
+}
+
+const formatBirthday = (value) => {
+  if (!value) return "";
+  const [y, m, d] = value.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("en-PH", { dateStyle: "long" });
+};
+
+// Personal information: read-only details, or an MUI form while editing.
+// Props are the same as before, so useProfile works unchanged.
 export default function ProfileForm({
   formData,
   editing,
@@ -76,6 +109,26 @@ export default function ProfileForm({
   onEdit,
   onCancel,
 }) {
+  if (!editing) {
+    return (
+      <Grid container spacing={2.5}>
+        <Grid size={{ xs: 6, sm: 4 }}><Detail label="Title" value={formData.title} /></Grid>
+        <Grid size={{ xs: 6, sm: 4 }}><Detail label="First name" value={formData.fname} /></Grid>
+        <Grid size={{ xs: 6, sm: 4 }}><Detail label="Last name" value={formData.lname} /></Grid>
+        <Grid size={{ xs: 6, sm: 4 }}><Detail label="Contact number" value={formData.phone} /></Grid>
+        <Grid size={{ xs: 6, sm: 4 }}><Detail label="Gender" value={formData.gender} /></Grid>
+        <Grid size={{ xs: 6, sm: 4 }}><Detail label="Date of birth" value={formatBirthday(formData.date_of_birth)} /></Grid>
+        <Grid size={{ xs: 12, sm: 8 }}><Detail label="Address" value={formData.addressline} /></Grid>
+        <Grid size={{ xs: 6, sm: 4 }}><Detail label="City / Town" value={formData.town} /></Grid>
+        <Grid size={{ xs: 12 }}>
+          <Button variant="contained" onClick={onEdit}>
+            Edit Profile
+          </Button>
+        </Grid>
+      </Grid>
+    );
+  }
+
   return (
     <Formik
       initialValues={formData}
@@ -83,226 +136,66 @@ export default function ProfileForm({
       validationSchema={profileSchema}
       onSubmit={onSubmit}
     >
-      {({ errors, touched, isSubmitting }) => (
-        <Form noValidate>
-          <h3 style={styles.heading}>Personal Information</h3>
+      {({ errors, touched, isSubmitting }) => {
+        const busy = saving || isSubmitting;
+        const fieldProps = (name) => ({
+          id: name,
+          name,
+          disabled: busy,
+          error: Boolean(touched[name] && errors[name]),
+          helperText: touched[name] && errors[name],
+        });
 
-          <div style={styles.grid}>
-            <div style={styles.field}>
-              <label htmlFor="title">Title</label>
-              <Field
-                as="select"
-                id="title"
-                name="title"
-                disabled={!editing || saving}
-              >
-                <option value="">Select title</option>
-                <option value="Mr.">Mr.</option>
-                <option value="Ms.">Ms.</option>
-                <option value="Mrs.">Mrs.</option>
-                <option value="Dr.">Dr.</option>
-              </Field>
-              <ErrorMessage name="title">
-                {(msg) => <p style={styles.fieldError}>{msg}</p>}
-              </ErrorMessage>
-            </div>
+        return (
+          <Form noValidate>
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Field as={TextField} select label="Title" {...fieldProps("title")}>
+                  <MenuItem value="">Not set</MenuItem>
+                  {TITLES.map((title) => (
+                    <MenuItem key={title} value={title}>{title}</MenuItem>
+                  ))}
+                </Field>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Field as={TextField} label="First name" required slotProps={{ htmlInput: { maxLength: 100 } }} {...fieldProps("fname")} />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Field as={TextField} label="Last name" required slotProps={{ htmlInput: { maxLength: 100 } }} {...fieldProps("lname")} />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Field as={TextField} label="Contact number" type="tel" autoComplete="tel" slotProps={{ htmlInput: { maxLength: 30 } }} {...fieldProps("phone")} />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Field as={TextField} select label="Gender" {...fieldProps("gender")}>
+                  <MenuItem value="">Not set</MenuItem>
+                  {GENDERS.map((gender) => (
+                    <MenuItem key={gender} value={gender}>{gender}</MenuItem>
+                  ))}
+                </Field>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Field as={TextField} label="Date of birth" type="date" slotProps={{ inputLabel: { shrink: true } }} {...fieldProps("date_of_birth")} />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 8 }}>
+                <Field as={TextField} label="Address" autoComplete="street-address" slotProps={{ htmlInput: { maxLength: 200 } }} {...fieldProps("addressline")} />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Field as={TextField} label="City / Town" autoComplete="address-level2" slotProps={{ htmlInput: { maxLength: 200 } }} {...fieldProps("town")} />
+              </Grid>
+            </Grid>
 
-            <div style={styles.field}>
-              <label htmlFor="fname">First Name</label>
-              <Field
-                id="fname"
-                name="fname"
-                disabled={!editing || saving}
-                maxLength={100}
-                aria-invalid={Boolean(touched.fname && errors.fname)}
-              />
-              <ErrorMessage name="fname">
-                {(msg) => <p style={styles.fieldError}>{msg}</p>}
-              </ErrorMessage>
-            </div>
-
-            <div style={styles.field}>
-              <label htmlFor="lname">Last Name</label>
-              <Field
-                id="lname"
-                name="lname"
-                disabled={!editing || saving}
-                maxLength={100}
-                aria-invalid={Boolean(touched.lname && errors.lname)}
-              />
-              <ErrorMessage name="lname">
-                {(msg) => <p style={styles.fieldError}>{msg}</p>}
-              </ErrorMessage>
-            </div>
-
-            <div style={styles.field}>
-              <label htmlFor="phone">Contact Number</label>
-              <Field
-                id="phone"
-                name="phone"
-                type="tel"
-                autoComplete="tel"
-                disabled={!editing || saving}
-                maxLength={30}
-                aria-invalid={Boolean(touched.phone && errors.phone)}
-              />
-              <ErrorMessage name="phone">
-                {(msg) => <p style={styles.fieldError}>{msg}</p>}
-              </ErrorMessage>
-            </div>
-
-            <div style={styles.field}>
-              <label htmlFor="gender">Gender</label>
-              <Field
-                as="select"
-                id="gender"
-                name="gender"
-                disabled={!editing || saving}
-              >
-                <option value="">Select gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-                <option value="Prefer not to say">Prefer not to say</option>
-              </Field>
-              <ErrorMessage name="gender">
-                {(msg) => <p style={styles.fieldError}>{msg}</p>}
-              </ErrorMessage>
-            </div>
-
-            <div style={styles.field}>
-              <label htmlFor="date_of_birth">Date of Birth</label>
-              <Field
-                id="date_of_birth"
-                name="date_of_birth"
-                type="date"
-                disabled={!editing || saving}
-                aria-invalid={Boolean(
-                  touched.date_of_birth && errors.date_of_birth
-                )}
-              />
-              <ErrorMessage name="date_of_birth">
-                {(msg) => <p style={styles.fieldError}>{msg}</p>}
-              </ErrorMessage>
-            </div>
-
-            <div style={styles.field}>
-              <label htmlFor="addressline">Address</label>
-              <Field
-                id="addressline"
-                name="addressline"
-                disabled={!editing || saving}
-                maxLength={200}
-                aria-invalid={Boolean(
-                  touched.addressline && errors.addressline
-                )}
-              />
-              <ErrorMessage name="addressline">
-                {(msg) => <p style={styles.fieldError}>{msg}</p>}
-              </ErrorMessage>
-            </div>
-
-            <div style={styles.field}>
-              <label htmlFor="town">City / Town</label>
-              <Field
-                id="town"
-                name="town"
-                disabled={!editing || saving}
-                maxLength={200}
-                aria-invalid={Boolean(touched.town && errors.town)}
-              />
-              <ErrorMessage name="town">
-                {(msg) => <p style={styles.fieldError}>{msg}</p>}
-              </ErrorMessage>
-            </div>
-          </div>
-
-          <div style={styles.actions}>
-            {!editing ? (
-              <button
-                type="button"
-                style={styles.button}
-                onClick={onEdit}
-              >
-                Edit Profile
-              </button>
-            ) : (
-              <>
-                <button
-                  type="submit"
-                  style={{
-                    ...styles.button,
-                    ...(saving || isSubmitting
-                      ? styles.disabledButton
-                      : {}),
-                  }}
-                  disabled={saving || isSubmitting}
-                >
-                  {saving || isSubmitting ? "Saving..." : "Save Changes"}
-                </button>
-
-                <button
-                  type="button"
-                  style={styles.cancelButton}
-                  onClick={onCancel}
-                  disabled={saving || isSubmitting}
-                >
-                  Cancel
-                </button>
-              </>
-            )}
-          </div>
-        </Form>
-      )}
+            <Stack direction="row" spacing={1} sx={{ mt: 3 }}>
+              <Button type="submit" variant="contained" startIcon={<SaveOutlinedIcon />} disabled={busy}>
+                {busy ? "Saving..." : "Save Changes"}
+              </Button>
+              <Button onClick={onCancel} disabled={busy}>
+                Cancel
+              </Button>
+            </Stack>
+          </Form>
+        );
+      }}
     </Formik>
   );
 }
-
-const styles = {
-  heading: {
-    marginBottom: "12px",
-  },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-    gap: "18px",
-    marginTop: "24px",
-  },
-  field: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "8px",
-    minWidth: 0,
-  },
-  fieldError: {
-    color: "#b91c1c",
-    margin: 0,
-    fontSize: "14px",
-  },
-  button: {
-    padding: "10px 18px",
-    backgroundColor: "#1d4ed8",
-    color: "#fff",
-    border: "none",
-    borderRadius: "5px",
-    cursor: "pointer",
-  },
-  disabledButton: {
-    opacity: 0.6,
-    cursor: "not-allowed",
-  },
-  cancelButton: {
-    padding: "10px 18px",
-    backgroundColor: "#e5e7eb",
-    color: "#111827",
-    border: "none",
-    borderRadius: "5px",
-    cursor: "pointer",
-  },
-  actions: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "10px",
-    marginTop: "24px",
-  },
-};
