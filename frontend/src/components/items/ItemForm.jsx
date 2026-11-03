@@ -176,7 +176,7 @@ function ItemForm({
           isSubmitting,
           handleBlur,
         }) => (
-          <Form noValidate>
+          <Form noValidate className="form-grid">
             <div>
               <label htmlFor="item_name">Item Name</label>
               <Field
@@ -197,7 +197,7 @@ function ItemForm({
               )}
             </div>
 
-            <div>
+            <div className="form-grid-full">
               <label htmlFor="description">Description</label>
               <Field
                 as="textarea"
@@ -323,7 +323,7 @@ function ItemForm({
             </div>
 
             {existingImages.length > 0 && (
-              <div>
+              <div className="form-grid-full">
                 <h3>Current Images</h3>
                 <p>
                   Mark images you want to remove when you save
@@ -380,7 +380,7 @@ function ItemForm({
             )}
 
             {previewImages.length > 0 && (
-              <div>
+              <div className="form-grid-full">
                 <h3>New Image Previews</h3>
 
                 <div

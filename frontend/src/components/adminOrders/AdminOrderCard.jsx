@@ -8,6 +8,7 @@ import Divider from '@mui/material/Divider'
 import StatusChip from '../common/StatusChip'
 import OrderItemsTable from '../common/OrderItemsTable'
 import AdminOrderStatus from './AdminOrderStatus'
+import ReceiptButton from '../common/ReceiptButton'
 
 const formatDate = (value) =>
     value
@@ -82,6 +83,11 @@ function AdminOrderCard({ order, onUpdateStatus, updating }) {
                             onUpdateStatus={onUpdateStatus}
                             updating={updating}
                         />
+                                              {order.status !== 'Cancelled' && (
+                          <Box sx={{ mt: 2 }}>
+                              <ReceiptButton orderId={order._id} size="small" fullWidth />
+                          </Box>
+                      )}
                     </Box>
 
                     {/* Items */}

@@ -10,6 +10,7 @@ import StepLabel from '@mui/material/StepLabel'
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
 import OrderStatus from './OrderStatus'
 import OrderItemsTable from '../common/OrderItemsTable'
+import ReceiptButton from '../common/ReceiptButton'
 
 const STEPS = ['Placed', 'Shipped', 'Delivered']
 
@@ -77,19 +78,27 @@ function OrderCard({ order, onCancel, cancelling }) {
 
                 <OrderItemsTable orderLines={order.order_lines || []} />
 
-                {canCancel && (
-                    <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-                        <Button
-                            variant="outlined"
-                            color="error"
-                            startIcon={<CancelOutlinedIcon />}
-                            onClick={() => onCancel(order._id)}
-                            disabled={cancelling}
-                        >
-                            {cancelling ? 'Cancelling...' : 'Cancel Order'}
-                        </Button>
-                    </Box>
-                )}
+                              {(canCancel || !isCancelled) && (
+                  <Stack
+                      direction="row"
+                      spacing={1}
+                      sx={{ mt: 2, justifyContent: 'flex-end', alignItems: 'flex-start', flexWrap: 'wrap', gap: 1 }}
+                  >
+                      {!isCancelled && <ReceiptButton orderId={order._id} />}
+
+                      {canCancel && (
+                          <Button
+                              variant="outlined"
+                              color="error"
+                              startIcon={<CancelOutlinedIcon />}
+                              onClick={() => onCancel(order._id)}
+                              disabled={cancelling}
+                          >
+                              {cancelling ? 'Cancelling...' : 'Cancel Order'}
+                          </Button>
+                      )}
+                  </Stack>
+              )}
             </CardContent>
         </Card>
     )

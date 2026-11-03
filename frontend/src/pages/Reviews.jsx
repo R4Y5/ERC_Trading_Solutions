@@ -1,14 +1,26 @@
-
 import { useEffect, useState } from 'react'
 import api from '../services/api'
 import CustomerNavbar from '../components/CustomerNavbar'
 import ReviewForm from '../components/reviews/ReviewForm'
+
+import Box from '@mui/material/Box'
+import Card from '@mui/material/Card'
+import CardContent from '@mui/material/CardContent'
+import Typography from '@mui/material/Typography'
+import Alert from '@mui/material/Alert'
+import Stack from '@mui/material/Stack'
+import Avatar from '@mui/material/Avatar'
+import Skeleton from '@mui/material/Skeleton'
+import RateReviewOutlinedIcon from '@mui/icons-material/RateReviewOutlined'
+import StatusChip from '../components/common/StatusChip'
 
 function Reviews() {
     const [orders, setOrders] = useState([])
     const [reviewStates, setReviewStates] = useState({})
     const [message, setMessage] = useState('')
     const [loading, setLoading] = useState(true)
+    // Orders still on their way (can be reviewed once delivered)
+    const [awaitingCount, setAwaitingCount] = useState(0)
 
     // Each item in each order has its own review state.
     const getReviewKey = (orderId, itemId) =>
@@ -25,7 +37,17 @@ function Reviews() {
 
         try {
             const response = await api.get('/orders')
-            const fetchedOrders = response.data.orders || []
+            const allOrders = response.data.orders || []
+
+            // Only delivered orders can be reviewed
+            const fetchedOrders = allOrders.filter(
+                (order) => order.status === 'Delivered'
+            )
+            setAwaitingCount(
+                allOrders.filter((order) =>
+                    ['Pending', 'Shipped'].includes(order.status)
+                ).length
+            )
 
             setOrders(fetchedOrders)
 
@@ -202,227 +224,260 @@ function Reviews() {
         <div>
             <CustomerNavbar />
 
-            <main style={{ padding: '20px' }}>
-                <h1>My Reviews</h1>
+            <Box component="main" sx={{ py: 3 }}>
+                <Box sx={{ mb: 2 }}>
+                    <Typography variant="h1">My Reviews</Typography>
+                    <Typography color="text.secondary">
+                        Rate and review the products from your delivered orders.
+                    </Typography>
+                </Box>
 
                 {message && (
-                    <p role="status">{message}</p>
+                    <Alert severity="info" role="status" sx={{ mb: 2 }}>
+                        {message}
+                    </Alert>
+                )}
+
+                {!loading && awaitingCount > 0 && (
+                    <Alert severity="info" sx={{ mb: 2 }}>
+                        {awaitingCount} order(s) are still on their way. You can
+                        review those items once they are delivered.
+                    </Alert>
                 )}
 
                 {loading ? (
-                    <p>Loading your orders and reviews...</p>
+                    [0, 1].map((key) => (
+                        <Skeleton key={key} variant="rounded" height={160} sx={{ mb: 2 }} />
+                    ))
                 ) : orders.length === 0 ? (
-                    <p>You have no orders to review.</p>
+                    <Box sx={{ textAlign: 'center', py: 8, color: 'text.secondary' }}>
+                        <RateReviewOutlinedIcon sx={{ fontSize: 48, color: 'grey.400' }} />
+                        <Typography>You have no delivered orders to review yet.</Typography>
+                    </Box>
                 ) : (
                     orders.map((order) => (
-                        <section
-                            key={order._id}
-                            style={{
-                                border: '1px solid #ddd',
-                                borderRadius: '8px',
-                                padding: '16px',
-                                marginBottom: '20px'
-                            }}
-                        >
-                            <h2>Order #{order._id}</h2>
+                        <Card component="section" key={order._id} sx={{ mb: 2 }}>
+                            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+                                <Stack
+                                    direction="row"
+                                    sx={{ justifyContent: 'space-between', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}
+                                >
+                                    <Box>
+                                        <Typography variant="overline" color="text.secondary">
+                                            Order
+                                        </Typography>
+                                        <Typography sx={{ fontWeight: 700, fontFamily: 'var(--mono)', wordBreak: 'break-all' }}>
+                                            #{order._id}
+                                        </Typography>
+                                    </Box>
+                                    <StatusChip status={order.status} />
+                                </Stack>
 
-                            {(order.order_lines || []).map(
-                                (line, index) => {
-                                    const item = line.item
+                                {(order.order_lines || []).map(
+                                    (line, index) => {
+                                        const item = line.item
 
-                                    if (!item?._id) {
-                                        return null
-                                    }
+                                        if (!item?._id) {
+                                            return null
+                                        }
 
-                                    const key = getReviewKey(
-                                        order._id,
-                                        item._id
-                                    )
+                                        const key = getReviewKey(
+                                            order._id,
+                                            item._id
+                                        )
 
-                                    const state = reviewStates[key]
+                                        const state = reviewStates[key]
 
-                                    return (
-                                        <article
-                                            key={`${key}:${index}`}
-                                            style={{
-                                                borderTop: '1px solid #eee',
-                                                padding: '16px 0'
-                                            }}
-                                        >
-                                            <h3>
-                                                {item.item_name ||
-                                                    'Unnamed item'}
-                                            </h3>
+                                        return (
+                                            <article
+                                                key={`${key}:${index}`}
+                                                style={{
+                                                    borderTop: '1px solid #eee',
+                                                    padding: '16px 0'
+                                                }}
+                                            >
+                                                <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', mb: 1 }}>
+                                                    <Avatar
+                                                        variant="rounded"
+                                                        src={(item.images || []).find((img) => !img.deleted_at && img.image_path)?.image_path}
+                                                        sx={{ width: 48, height: 48, bgcolor: 'grey.100' }}
+                                                    />
+                                                    <Typography variant="h4" component="h3">
+                                                        {item.item_name ||
+                                                            'Unnamed item'}
+                                                    </Typography>
+                                                </Stack>
 
-                                            <p>
-                                                Quantity ordered: {
-                                                    line.quantity
-                                                }
-                                            </p>
-
-                                            {!state && (
                                                 <p>
-                                                    Checking review status...
+                                                    Quantity ordered: {
+                                                        line.quantity
+                                                    }
                                                 </p>
-                                            )}
 
-                                            {state?.status === 'error' && (
-                                                <p role="alert">
-                                                    Unable to load this review's
-                                                    status. Please refresh the page.
-                                                </p>
-                                            )}
-
-                                            {state?.status === 'notReviewed' &&
-                                                state.mode === 'view' && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            updateReviewState(
-                                                                key,
-                                                                { mode: 'create' }
-                                                            )
-                                                        }
-                                                    >
-                                                        Review Item
-                                                    </button>
+                                                {!state && (
+                                                    <p>
+                                                        Checking review status...
+                                                    </p>
                                                 )}
 
-                                            {state?.status === 'notReviewed' &&
-                                                state.mode === 'create' && (
-                                                    <div>
-                                                        <h4>Write a Review</h4>
-
-                                                        <ReviewForm
-                                                            key={`${key}:create`}
-                                                            submitLabel="Submit Review"
-                                                            onSubmit={(values) =>
-                                                                submitReview(
-                                                                    order._id,
-                                                                    item._id,
-                                                                    values,
-                                                                    false
-                                                                )
-                                                            }
-                                                            onCancel={() =>
-                                                                updateReviewState(
-                                                                    key,
-                                                                    { mode: 'view' }
-                                                                )
-                                                            }
-                                                        />
-                                                    </div>
+                                                {state?.status === 'error' && (
+                                                    <p role="alert">
+                                                        Unable to load this review's
+                                                        status. Please refresh the page.
+                                                    </p>
                                                 )}
 
-                                            {state?.status === 'reviewed' &&
-                                                state.mode === 'view' && (
-                                                    <div>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                                openReview(
-                                                                    order._id,
-                                                                    item._id
-                                                                )
-                                                            }
-                                                        >
-                                                            View Review
-                                                        </button>
-
+                                                {state?.status === 'notReviewed' &&
+                                                    state.mode === 'view' && (
                                                         <button
                                                             type="button"
                                                             onClick={() =>
                                                                 updateReviewState(
                                                                     key,
-                                                                    { mode: 'edit' }
+                                                                    { mode: 'create' }
                                                                 )
                                                             }
                                                         >
-                                                            Edit Review
+                                                            Review Item
                                                         </button>
-                                                    </div>
-                                                )}
+                                                    )}
 
-                                            {state?.status === 'reviewed' &&
-                                                state.mode === 'details' && (
-                                                    <div>
-                                                        <h4>Your Review</h4>
+                                                {state?.status === 'notReviewed' &&
+                                                    state.mode === 'create' && (
+                                                        <div>
+                                                            <h4>Write a Review</h4>
 
-                                                        <p>
-                                                            <strong>Rating:</strong>{' '}
-                                                            {state.review.rating}/5
-                                                        </p>
+                                                            <ReviewForm
+                                                                key={`${key}:create`}
+                                                                submitLabel="Submit Review"
+                                                                onSubmit={(values) =>
+                                                                    submitReview(
+                                                                        order._id,
+                                                                        item._id,
+                                                                        values,
+                                                                        false
+                                                                    )
+                                                                }
+                                                                onCancel={() =>
+                                                                    updateReviewState(
+                                                                        key,
+                                                                        { mode: 'view' }
+                                                                    )
+                                                                }
+                                                            />
+                                                        </div>
+                                                    )}
 
-                                                        <p>
-                                                            <strong>Review:</strong>{' '}
-                                                            {state.review.review_text}
-                                                        </p>
+                                                {state?.status === 'reviewed' &&
+                                                    state.mode === 'view' && (
+                                                        <div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    openReview(
+                                                                        order._id,
+                                                                        item._id
+                                                                    )
+                                                                }
+                                                            >
+                                                                View Review
+                                                            </button>
 
-                                                        <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                                updateReviewState(
-                                                                    key,
-                                                                    { mode: 'edit' }
-                                                                )
-                                                            }
-                                                        >
-                                                            Edit Review
-                                                        </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    updateReviewState(
+                                                                        key,
+                                                                        { mode: 'edit' }
+                                                                    )
+                                                                }
+                                                            >
+                                                                Edit Review
+                                                            </button>
+                                                        </div>
+                                                    )}
 
-                                                        <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                                updateReviewState(
-                                                                    key,
-                                                                    { mode: 'view' }
-                                                                )
-                                                            }
-                                                        >
-                                                            Close Review
-                                                        </button>
-                                                    </div>
-                                                )}
+                                                {state?.status === 'reviewed' &&
+                                                    state.mode === 'details' && (
+                                                        <div>
+                                                            <h4>Your Review</h4>
 
-                                            {state?.status === 'reviewed' &&
-                                                state.mode === 'edit' && (
-                                                    <div>
-                                                        <h4>Edit Your Review</h4>
+                                                            <p>
+                                                                <strong>Rating:</strong>{' '}
+                                                                {state.review.rating}/5
+                                                            </p>
 
-                                                        <ReviewForm
-                                                            key={`${key}:edit:${state.review?._id}`}
-                                                            initialValues={{
-                                                                rating:
-                                                                    state.review?.rating ?? '',
-                                                                review_text:
-                                                                    state.review?.review_text ?? ''
-                                                            }}
-                                                            submitLabel="Save Changes"
-                                                            onSubmit={(values) =>
-                                                                submitReview(
-                                                                    order._id,
-                                                                    item._id,
-                                                                    values,
-                                                                    true
-                                                                )
-                                                            }
-                                                            onCancel={() =>
-                                                                updateReviewState(
-                                                                    key,
-                                                                    { mode: 'details' }
-                                                                )
-                                                            }
-                                                        />
-                                                    </div>
-                                                )}
-                                        </article>
-                                    )
-                                }
-                            )}
-                        </section>
+                                                            <p>
+                                                                <strong>Review:</strong>{' '}
+                                                                {state.review.review_text}
+                                                            </p>
+
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    updateReviewState(
+                                                                        key,
+                                                                        { mode: 'edit' }
+                                                                    )
+                                                                }
+                                                            >
+                                                                Edit Review
+                                                            </button>
+
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    updateReviewState(
+                                                                        key,
+                                                                        { mode: 'view' }
+                                                                    )
+                                                                }
+                                                            >
+                                                                Close Review
+                                                            </button>
+                                                        </div>
+                                                    )}
+
+                                                {state?.status === 'reviewed' &&
+                                                    state.mode === 'edit' && (
+                                                        <div>
+                                                            <h4>Edit Your Review</h4>
+
+                                                            <ReviewForm
+                                                                key={`${key}:edit:${state.review?._id}`}
+                                                                initialValues={{
+                                                                    rating:
+                                                                        state.review?.rating ?? '',
+                                                                    review_text:
+                                                                        state.review?.review_text ?? ''
+                                                                }}
+                                                                submitLabel="Save Changes"
+                                                                onSubmit={(values) =>
+                                                                    submitReview(
+                                                                        order._id,
+                                                                        item._id,
+                                                                        values,
+                                                                        true
+                                                                    )
+                                                                }
+                                                                onCancel={() =>
+                                                                    updateReviewState(
+                                                                        key,
+                                                                        { mode: 'details' }
+                                                                    )
+                                                                }
+                                                            />
+                                                        </div>
+                                                    )}
+                                            </article>
+                                        )
+                                    }
+                                )}
+                            </CardContent>
+                        </Card>
                     ))
                 )}
-            </main>
+            </Box>
         </div>
     )
 }

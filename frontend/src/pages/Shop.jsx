@@ -1,5 +1,16 @@
-
 import { useEffect, useRef } from 'react'
+import Box from '@mui/material/Box'
+import Grid from '@mui/material/Grid'
+import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
+import Alert from '@mui/material/Alert'
+import Pagination from '@mui/material/Pagination'
+import Skeleton from '@mui/material/Skeleton'
+import CircularProgress from '@mui/material/CircularProgress'
+import ToggleButton from '@mui/material/ToggleButton'
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import ViewModuleOutlinedIcon from '@mui/icons-material/ViewModuleOutlined'
+import AllInclusiveIcon from '@mui/icons-material/AllInclusive'
 
 import CustomerNavbar from '../components/CustomerNavbar'
 import ShopSearch from '../components/shop/ShopSearch'
@@ -98,30 +109,26 @@ function Shop() {
             : visibleItems
 
     return (
-        <div style={styles.page}>
+        <div>
             <CustomerNavbar />
 
-            <main style={styles.container}>
-                <header style={styles.header}>
-                    <h1 style={styles.title}>Shop Products</h1>
-                    <p style={styles.subtitle}>
+            <Box component="main" sx={{ py: 3 }}>
+                <Box sx={{ mb: 3 }}>
+                    <Typography variant="h1">Shop Products</Typography>
+                    <Typography color="text.secondary">
                         Browse our products and find what you need.
-                    </p>
-                </header>
+                    </Typography>
+                </Box>
 
                 {message && (
-                    <div style={styles.message} role="status">
-                        <span>{message}</span>
-
-                        <button
-                            type="button"
-                            onClick={() => setMessage('')}
-                            style={styles.dismissButton}
-                            aria-label="Dismiss message"
-                        >
-                            ×
-                        </button>
-                    </div>
+                    <Alert
+                        severity={/fail|error|only|log in|must/i.test(message) ? 'warning' : 'success'}
+                        role="status"
+                        onClose={() => setMessage('')}
+                        sx={{ mb: 2 }}
+                    >
+                        {message}
+                    </Alert>
                 )}
 
                 <ShopSearch
@@ -146,51 +153,54 @@ function Shop() {
                     onReset={resetFilters}
                 />
 
-                <section style={styles.resultsSection}>
-                    <div style={styles.toolbar}>
-                        <div>
-                            <h2 style={styles.resultsTitle}>
+                <Box component="section" sx={{ mt: 3 }}>
+                    <Stack
+                        direction={{ xs: 'column', sm: 'row' }}
+                        spacing={1.5}
+                        sx={{ justifyContent: 'space-between', alignItems: { sm: 'center' }, mb: 2 }}
+                    >
+                        <Box>
+                            <Typography variant="h2" sx={{ mb: 0.25 }}>
                                 Available Products
-                            </h2>
-
-                            <p style={styles.count}>
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
                                 {loading
                                     ? 'Loading products...'
                                     : `${filteredItems.length} product(s) found`}
-                            </p>
-                        </div>
+                            </Typography>
+                        </Box>
 
-                        <div style={styles.modeControl}>
-                            <label
-                                htmlFor="displayMode"
-                                style={styles.modeLabel}
-                            >
-                                Display:
-                            </label>
-
-                            <select
-                                id="displayMode"
-                                value={displayMode}
-                                onChange={(event) =>
-                                    setDisplayMode(event.target.value)
-                                }
-                                style={styles.modeSelect}
-                            >
-                                <option value="pagination">
-                                    Pagination
-                                </option>
-
-                                <option value="infinite">
-                                    Infinite Scroll
-                                </option>
-                            </select>
-                        </div>
-                    </div>
+                        <ToggleButtonGroup
+                            size="small"
+                            exclusive
+                            color="primary"
+                            value={displayMode}
+                            onChange={(_, value) => value && setDisplayMode(value)}
+                            aria-label="Display mode"
+                        >
+                            <ToggleButton value="pagination" aria-label="Pagination">
+                                <ViewModuleOutlinedIcon fontSize="small" sx={{ mr: 0.75 }} />
+                                Pagination
+                            </ToggleButton>
+                            <ToggleButton value="infinite" aria-label="Infinite Scroll">
+                                <AllInclusiveIcon fontSize="small" sx={{ mr: 0.75 }} />
+                                Infinite Scroll
+                            </ToggleButton>
+                        </ToggleButtonGroup>
+                    </Stack>
 
                     {loading ? (
-                        <p style={styles.statusText}>
-                            Loading products...
-                        </p>
+                        <Grid container spacing={2.5}>
+                            {Array.from({ length: 8 }).map((_, index) => (
+                                <Grid key={index} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+                                    <Skeleton variant="rounded" height={200} />
+                                    <Skeleton width="40%" sx={{ mt: 1.5 }} />
+                                    <Skeleton width="85%" />
+                                    <Skeleton width="55%" />
+                                    <Skeleton variant="rounded" height={38} sx={{ mt: 1 }} />
+                                </Grid>
+                            ))}
+                        </Grid>
                     ) : (
                         <>
                             <ProductGrid
@@ -201,80 +211,53 @@ function Shop() {
                             />
 
                             {filteredItems.length > 0 &&
-                                displayMode === 'pagination' && (
-                                    <div
-                                        style={styles.pagination}
-                                        aria-label="Product pages"
-                                    >
-                                        <button
-                                            type="button"
-                                            disabled={currentPage === 1}
-                                            onClick={() =>
-                                                setCurrentPage((page) =>
-                                                    Math.max(1, page - 1)
-                                                )
-                                            }
-                                            style={{
-                                                ...styles.pageButton,
-                                                ...(currentPage === 1
-                                                    ? styles.disabledButton
-                                                    : {})
+                                displayMode === 'pagination' &&
+                                totalPages > 1 && (
+                                    <Stack spacing={1} sx={{ alignItems: 'center', my: 4 }}>
+                                        <Pagination
+                                            count={totalPages}
+                                            page={currentPage}
+                                            onChange={(_, page) => {
+                                                setCurrentPage(page)
+                                                window.scrollTo({ top: 0, behavior: 'smooth' })
                                             }}
-                                        >
-                                            Previous
-                                        </button>
-
-                                        <span style={styles.pageInfo}>
-                                            Page {currentPage} of {totalPages}
-                                        </span>
-
-                                        <button
-                                            type="button"
-                                            disabled={
-                                                currentPage >= totalPages
-                                            }
-                                            onClick={() =>
-                                                setCurrentPage((page) =>
-                                                    Math.min(
-                                                        totalPages,
-                                                        page + 1
-                                                    )
-                                                )
-                                            }
-                                            style={{
-                                                ...styles.pageButton,
-                                                ...(currentPage >= totalPages
-                                                    ? styles.disabledButton
-                                                    : {})
-                                            }}
-                                        >
-                                            Next
-                                        </button>
-                                    </div>
+                                            color="primary"
+                                            shape="rounded"
+                                            showFirstButton
+                                            showLastButton
+                                            aria-label="Product pages"
+                                        />
+                                        <Typography variant="body2" color="text.secondary">
+                                            Page {currentPage} of {totalPages} · {itemsPerPage} per page
+                                        </Typography>
+                                    </Stack>
                                 )}
 
                             {displayMode === 'infinite' &&
                                 visibleCount < filteredItems.length && (
-                                    <div
+                                    <Stack
                                         ref={loadMoreRef}
-                                        style={styles.loadMore}
+                                        direction="row"
+                                        spacing={1.5}
                                         aria-live="polite"
+                                        sx={{ justifyContent: 'center', alignItems: 'center', my: 4, color: 'text.secondary' }}
                                     >
-                                        Loading more products...
-                                    </div>
+                                        <CircularProgress size={20} />
+                                        <span>Loading more products...</span>
+                                    </Stack>
                                 )}
 
                             {displayMode === 'infinite' &&
                                 filteredItems.length > 0 &&
                                 visibleCount >= filteredItems.length && (
-                                    <p style={styles.endMessage}>
+                                    <Typography sx={{ textAlign: 'center', color: 'text.secondary', py: 3 }}>
                                         You've reached the end of the products.
-                                    </p>
+                                    </Typography>
                                 )}
                         </>
                     )}
-                </section>
-            </main>
+                </Box>
+            </Box>
 
             {selectedItem && (
                 <ProductDetails
@@ -289,129 +272,6 @@ function Shop() {
             )}
         </div>
     )
-}
-
-const styles = {
-    page: {
-        minHeight: '100vh',
-        backgroundColor: '#f8fafc',
-        color: '#1e293b'
-    },
-    container: {
-        maxWidth: '1400px',
-        margin: '0 auto',
-        padding: '32px 24px'
-    },
-    header: {
-        marginBottom: '24px'
-    },
-    title: {
-        margin: '0 0 8px',
-        fontSize: '32px',
-        fontWeight: '700'
-    },
-    subtitle: {
-        margin: 0,
-        color: '#64748b'
-    },
-    message: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        gap: '12px',
-        padding: '12px 16px',
-        marginBottom: '20px',
-        borderRadius: '8px',
-        backgroundColor: '#e0f2fe',
-        color: '#075985'
-    },
-    dismissButton: {
-        border: 'none',
-        background: 'transparent',
-        fontSize: '22px',
-        cursor: 'pointer',
-        color: 'inherit'
-    },
-    resultsSection: {
-        marginTop: '28px'
-    },
-    toolbar: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        gap: '16px',
-        flexWrap: 'wrap',
-        marginBottom: '20px'
-    },
-    resultsTitle: {
-        margin: '0 0 6px',
-        fontSize: '22px'
-    },
-    count: {
-        margin: 0,
-        color: '#64748b',
-        fontSize: '14px'
-    },
-    modeControl: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '10px'
-    },
-    modeLabel: {
-        fontSize: '14px',
-        fontWeight: '600'
-    },
-    modeSelect: {
-        padding: '10px 12px',
-        border: '1px solid #cbd5e1',
-        borderRadius: '8px',
-        backgroundColor: '#fff',
-        fontSize: '14px',
-        cursor: 'pointer'
-    },
-    pagination: {
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexWrap: 'wrap',
-        gap: '16px',
-        margin: '32px 0'
-    },
-    pageButton: {
-        padding: '10px 18px',
-        border: '1px solid #cbd5e1',
-        borderRadius: '8px',
-        backgroundColor: '#fff',
-        color: '#1e293b',
-        fontWeight: '600',
-        cursor: 'pointer'
-    },
-    disabledButton: {
-        opacity: 0.45,
-        cursor: 'not-allowed'
-    },
-    pageInfo: {
-        fontSize: '14px',
-        color: '#475569'
-    },
-    loadMore: {
-        minHeight: '50px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: '#64748b',
-        margin: '20px 0'
-    },
-    endMessage: {
-        textAlign: 'center',
-        color: '#64748b',
-        padding: '24px'
-    },
-    statusText: {
-        textAlign: 'center',
-        padding: '32px',
-        color: '#64748b'
-    }
 }
 
 export default Shop

@@ -655,6 +655,7 @@ function useItems() {
     imagesToRemove,
     loading,
     selectedItemIds,
+    setSelectedItemIds,
     bulkDeleting,
     bulkRestoring,
     viewDeleted,
