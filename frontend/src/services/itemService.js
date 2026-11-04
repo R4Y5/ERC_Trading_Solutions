@@ -1,7 +1,10 @@
 
 import api from "./api";
 
-// Fetch active products.
+// Fetch ALL active products.
+// The backend returns products one page at a time (10 per page by
+// default), so ask for 100 per page and keep going until every page
+// is loaded.
 export const getItems = async () => {
   const firstResponse = await api.get("/items", {
     params: { page: 1, limit: 100 },
