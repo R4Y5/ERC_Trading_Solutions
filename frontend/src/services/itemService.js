@@ -3,8 +3,22 @@ import api from "./api";
 
 // Fetch active products.
 export const getItems = async () => {
-  const response = await api.get("/items");
-  return response.data;
+  const firstResponse = await api.get("/items", {
+    params: { page: 1, limit: 100 },
+  });
+
+  const firstData = firstResponse.data;
+  const items = [...(firstData.items || [])];
+  const totalPages = firstData.pagination?.pages || 1;
+
+  for (let page = 2; page <= totalPages; page += 1) {
+    const response = await api.get("/items", {
+      params: { page, limit: 100 },
+    });
+    items.push(...(response.data.items || []));
+  }
+
+  return { ...firstData, items };
 };
 
 // Fetch soft-deleted products.
