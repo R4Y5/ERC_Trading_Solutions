@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { DataGrid } from '@mui/x-data-grid'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
@@ -83,7 +83,42 @@ function ItemsTable({
         [selectedItemIds]
     )
 
-    const columns = [
+    // Clicking anywhere on a row (including around the small checkbox)
+    // selects or unselects it. Clicks on the checkbox itself are handled
+    // by the grid, and the Actions column (Edit/Delete) is left alone.
+    const handleCellClick = useCallback(
+        (params, event) => {
+            if (params.field === 'actions') return
+            if (event.target.closest('input, button, a')) return
+
+            const id = params.id
+            onSelectionChange(
+                selectedItemIds.includes(id)
+                    ? selectedItemIds.filter((selectedId) => selectedId !== id)
+                    : [...selectedItemIds, id]
+            )
+        },
+        [onSelectionChange, selectedItemIds]
+    )
+
+        // Clicking anywhere in the header checkbox cell (not just the small
+    // box) selects all products, or clears the selection if all are
+    // already selected.
+    const handleColumnHeaderClick = useCallback(
+        (params, event) => {
+            if (params.field !== '__check__') return
+            if (event.target.closest('input')) return
+
+            const allSelected =
+                rowIds.length > 0 &&
+                rowIds.every((id) => selectedItemIds.includes(id))
+
+            onSelectionChange(allSelected ? [] : rowIds)
+        },
+        [onSelectionChange, rowIds, selectedItemIds]
+    )
+
+    const columns = useMemo(() => [
         {
             field: 'image',
             headerName: '',
@@ -202,7 +237,7 @@ function ItemsTable({
                     </>
                 )
         }
-    ]
+    ], [viewDeleted, onEdit, onDelete, onRestore])
 
     const selectedCount = selectedItemIds.length
 
@@ -249,6 +284,8 @@ function ItemsTable({
                 checkboxSelection
                 disableRowSelectionOnClick
                 rowSelectionModel={selectionModel}
+                onCellClick={handleCellClick}
+                onColumnHeaderClick={handleColumnHeaderClick}
                 onRowSelectionModelChange={(model) =>
                     onSelectionChange(toSelectedIds(model, rowIds))
                 }
@@ -266,6 +303,9 @@ function ItemsTable({
                     borderColor: 'divider',
                     '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' },
                     '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center' },
+                    '& .MuiDataGrid-row': { cursor: 'pointer' },
+                    '& .MuiDataGrid-cellCheckbox': { justifyContent: 'center' },
+                    '& .MuiDataGrid-columnHeaderCheckbox': { cursor: 'pointer' },
                     '& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within': { outline: 'none' }
                 }}
             />
