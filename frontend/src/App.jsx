@@ -17,10 +17,14 @@ import AdminReviews from "./pages/AdminReviews";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
+import PageTitle from "./components/layout/PageTitle";
 
 function App() {
   return (
     <BrowserRouter>
+      {/* Sets the browser tab title for each page */}
+      <PageTitle />
+
       <Routes>
         {/* Home */}
         <Route path="/" element={<Home />} />
