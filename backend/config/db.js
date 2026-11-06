@@ -1,4 +1,9 @@
+const dns = require("dns");
 const mongoose = require("mongoose");
+
+// Some home/ISP DNS servers refuse the lookup that "mongodb+srv://" needs
+// (error: querySrv ECONNREFUSED). Use public DNS servers instead.
+dns.setServers(["8.8.8.8", "1.1.1.1"]);
 
 const connectDB = async () => {
     try {

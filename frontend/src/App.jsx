@@ -14,9 +14,9 @@ import MyOrders from "./pages/MyOrders";
 import AdminOrders from "./pages/AdminOrders";
 import Reviews from "./pages/Reviews";
 import AdminReviews from "./pages/AdminReviews";
-
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
+import GuestRoute from "./components/GuestRoute";
 import PageTitle from "./components/layout/PageTitle";
 
 function App() {
@@ -30,15 +30,26 @@ function App() {
         <Route path="/" element={<Home />} />
 
         {/* Registration */}
-        <Route path="/register" element={<Register />} />
+        <Route
+          path="/register"
+          element={
+            <GuestRoute>
+              <Register />
+            </GuestRoute>
+          }
+        />
 
         <Route
           path="/complete-registration"
-          element={<CompleteRegistration />}
+          element={
+            <GuestRoute>
+              <CompleteRegistration />
+            </GuestRoute>
+          }
         />
 
         {/* Login */}
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
 
         {/* Customer Profile */}
         <Route
