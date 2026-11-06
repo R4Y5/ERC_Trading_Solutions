@@ -1,3 +1,4 @@
+
 const express = require('express')
 
 const {
@@ -9,15 +10,25 @@ const {
     cancelOrder
 } = require('../controllers/orderController')
 
-const { getSalesReport } = require('../controllers/salesController')
-const { downloadReceipt } = require('../controllers/receiptController')
+const {
+    getSalesReport,
+    getTopProducts
+} = require('../controllers/salesController')
+const {
+    downloadReceipt,
+    downloadReceiptByLink
+} = require('../controllers/receiptController')
 const { protect, admin } = require('../middleware/authMiddleware')
 
 const router = express.Router()
 
+// Receipt link from emails (no login; protected by a signed token)
+router.get('/:id/receipt/download', downloadReceiptByLink)
+
 // Admin routes
 router.get('/admin/all', protect, admin, getAllOrders)
 router.get('/admin/sales', protect, admin, getSalesReport)
+router.get('/admin/top-products', protect, admin, getTopProducts)
 router.put('/admin/:id', protect, admin, updateOrderStatus)
 
 // Customer routes

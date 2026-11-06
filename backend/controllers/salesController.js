@@ -159,8 +159,145 @@ const getSalesReport = async (req, res) => {
     }
 }
 
+// GET /api/orders/admin/top-products?metric=units|revenue&limit=10&start=YYYY-MM-DD&end=YYYY-MM-DD
+// Best-selling products. start/end are optional (leave both out for all time).
+// Cancelled and deleted orders are not counted.
+const getTopProducts = async (req, res) => {
+    try {
+        const metric = req.query.metric === 'revenue' ? 'revenue' : 'units'
+        const limit = Math.min(20, Math.max(1, parseInt(req.query.limit, 10) || 10))
+        const start = req.query.start ? String(req.query.start) : ''
+        const end = req.query.end ? String(req.query.end) : ''
+
+        const match = {
+            deleted_at: null,
+            status: { $ne: 'Cancelled' }
+        }
+
+        if (start || end) {
+            if (!isValidDateString(start) || !isValidDateString(end)) {
+                return res.status(400).json({
+                    message: 'Please provide valid start and end dates (YYYY-MM-DD)'
+                })
+            }
+
+            if (start > end) {
+                return res.status(400).json({
+                    message: 'Start date must be on or before the end date'
+                })
+            }
+
+            const startDate = new Date(`${start}T00:00:00${TZ_OFFSET}`)
+            const endDate = new Date(`${end}T00:00:00${TZ_OFFSET}`)
+            endDate.setUTCDate(endDate.getUTCDate() + 1) // end date is inclusive
+
+            match.date_placed = { $gte: startDate, $lt: endDate }
+        }
+
+        const sortField = metric === 'revenue' ? 'revenue' : 'units'
+
+        const [result] = await Order.aggregate([
+            { $match: match },
+            { $unwind: '$order_lines' },
+            {
+                $group: {
+                    _id: '$order_lines.item',
+                    units: { $sum: '$order_lines.quantity' },
+                    revenue: {
+                        $sum: {
+                            $multiply: ['$order_lines.price', '$order_lines.quantity']
+                        }
+                    },
+                    orderIds: { $addToSet: '$_id' }
+                }
+            },
+            {
+                $facet: {
+                    top: [
+                        { $sort: { [sortField]: -1, units: -1, _id: 1 } },
+                        { $limit: limit },
+                        {
+                            $lookup: {
+                                from: 'items',
+                                localField: '_id',
+                                foreignField: '_id',
+                                as: 'item'
+                            }
+                        },
+                        {
+                            $project: {
+                                _id: 0,
+                                itemId: '$_id',
+                                units: 1,
+                                revenue: 1,
+                                orders: { $size: '$orderIds' },
+                                name: { $ifNull: [{ $arrayElemAt: ['$item.item_name', 0] }, 'Item no longer available'] },
+                                category: { $arrayElemAt: ['$item.category', 0] },
+                                images: { $arrayElemAt: ['$item.images', 0] }
+                            }
+                        }
+                    ],
+                    totals: [
+                        {
+                            $group: {
+                                _id: null,
+                                units: { $sum: '$units' },
+                                revenue: { $sum: '$revenue' },
+                                products: { $sum: 1 }
+                            }
+                        }
+                    ]
+                }
+            }
+        ])
+
+        const totals = result?.totals?.[0] || { units: 0, revenue: 0, products: 0 }
+        const totalForMetric = metric === 'revenue' ? totals.revenue : totals.units
+
+        const products = (result?.top || []).map((product) => {
+            const image = (product.images || []).find(
+                (img) => !img.deleted_at && img.image_path
+            )
+            const value = metric === 'revenue' ? product.revenue : product.units
+
+            return {
+                itemId: product.itemId,
+                name: product.name,
+                category: product.category || '',
+                image: image?.image_path || '',
+                units: product.units,
+                revenue: Math.round(product.revenue * 100) / 100,
+                orders: product.orders,
+                // share of all units (or revenue) sold in the period
+                share: totalForMetric > 0
+                    ? Math.round((value / totalForMetric) * 1000) / 10
+                    : 0
+            }
+        })
+
+        return res.status(200).json({
+            message: 'Top products retrieved successfully',
+            metric,
+            start: start || null,
+            end: end || null,
+            products,
+            totals: {
+                units: totals.units,
+                revenue: Math.round(totals.revenue * 100) / 100,
+                products: totals.products
+            }
+        })
+    } catch (error) {
+        console.error('Top products error:', error)
+        return res.status(500).json({
+            message: 'Error retrieving top products'
+        })
+    }
+}
+
 module.exports = {
     getSalesReport,
+    getTopProducts,
     buildBucketKeys,
     isValidDateString
 }

@@ -1,6 +1,7 @@
 const sendEmail = require('./sendEmail')
 const generateReceiptPdf = require('./generateReceiptPdf')
 const { buildOrderSummary } = require('./orderSummary')
+const { createReceiptDownloadUrl } = require('./receiptLink')
 const {
     buildOrderEmailHtml,
     buildOrderEmailText
@@ -18,12 +19,13 @@ const sendOrderStatusEmail = async (order) => {
 
     const intro = `Your order #${summary.orderId} is now ${summary.status}.`
     const pdfBuffer = await generateReceiptPdf(summary)
+    const downloadUrl = createReceiptDownloadUrl(summary.orderId)
 
     await sendEmail({
         to: summary.customerEmail,
         subject: `Your order #${summary.orderId} is now ${summary.status}`,
-        html: buildOrderEmailHtml(summary, intro),
-        text: buildOrderEmailText(summary, intro),
+        html: buildOrderEmailHtml(summary, intro, { downloadUrl }),
+        text: buildOrderEmailText(summary, intro, { downloadUrl }),
         attachments: [
             {
                 filename: `ERC-Receipt-${summary.orderId}.pdf`,

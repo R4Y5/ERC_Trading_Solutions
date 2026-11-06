@@ -18,6 +18,7 @@ import RateReviewOutlinedIcon from '@mui/icons-material/RateReviewOutlined'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import AdminNavbar from '../components/AdminNavbar'
 import SalesChart from '../components/dashboard/SalesChart'
+import TopProductsChart from '../components/dashboard/TopProductsChart'
 import useDashboardStats from '../hooks/useDashboardStats'
 
 function StatCard({ label, value, icon, color, to, loading }) {
@@ -86,6 +87,8 @@ function AdminDashboard() {
                 </Grid>
 
                 <SalesChart />
+
+                <TopProductsChart />
 
                 <Typography variant="h2" sx={{ mt: 4, mb: 2 }}>
                     Quick actions

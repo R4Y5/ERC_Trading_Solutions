@@ -1,6 +1,7 @@
 const nodemailer = require('nodemailer')
 const generateReceiptPdf = require('./generateReceiptPdf')
 const { buildOrderSummary } = require('./orderSummary')
+const { createReceiptDownloadUrl } = require('./receiptLink')
 const {
     escapeHtml,
     wrapEmail,
@@ -78,6 +79,7 @@ const sendOrderEmail = async (order, subject, message) => {
     }
 
     const hasReceipt = summary.status !== 'Cancelled'
+    const downloadUrl = hasReceipt ? createReceiptDownloadUrl(summary.orderId) : null
     const attachments = hasReceipt
         ? [
             {
@@ -91,8 +93,8 @@ const sendOrderEmail = async (order, subject, message) => {
     return sendMail({
         to: summary.customerEmail,
         subject,
-        text: buildOrderEmailText(summary, message, { hasReceipt }),
-        html: buildOrderEmailHtml(summary, message, { hasReceipt }),
+        text: buildOrderEmailText(summary, message, { hasReceipt, downloadUrl }),
+        html: buildOrderEmailHtml(summary, message, { hasReceipt, downloadUrl }),
         attachments
     })
 }
